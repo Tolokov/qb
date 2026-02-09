@@ -1,0 +1,233 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  /* ---- Light (default) ---- */
+  :root,
+  [data-theme="light"] {
+    --background: 220 14% 96%;
+    --foreground: 220 9% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 12%;
+    --primary: 213 94% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 220 9% 20%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 6% 44%;
+    --accent: 213 94% 95%;
+    --accent-foreground: 213 94% 38%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 213 94% 48%;
+    --chart-1: 213 94% 48%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 30%;
+    --sidebar-primary: 213 94% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 94% 95%;
+    --sidebar-accent-foreground: 213 94% 38%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 213 94% 48%;
+    --canvas: 220 14% 96%;
+    --canvas-foreground: 220 9% 12%;
+    --success: 142 72% 40%;
+    --success-foreground: 0 0% 100%;
+    --surface: 0 0% 98%;
+    --surface-foreground: 220 9% 12%;
+    --canvas-dot: 220 10% 80%;
+    --scrollbar-thumb: 220 6% 70%;
+  }
+
+  /* ---- Dark ---- */
+  [data-theme="dark"] {
+    --background: 220 13% 10%;
+    --foreground: 220 10% 90%;
+    --card: 220 13% 13%;
+    --card-foreground: 220 10% 90%;
+    --popover: 220 13% 13%;
+    --popover-foreground: 220 10% 90%;
+    --primary: 213 94% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 13% 17%;
+    --secondary-foreground: 220 10% 82%;
+    --muted: 220 13% 17%;
+    --muted-foreground: 220 8% 54%;
+    --accent: 213 50% 20%;
+    --accent-foreground: 213 90% 70%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
+    --ring: 213 94% 56%;
+    --chart-1: 213 94% 56%;
+    --chart-2: 173 58% 50%;
+    --chart-3: 197 37% 50%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar-background: 220 13% 11%;
+    --sidebar-foreground: 220 8% 65%;
+    --sidebar-primary: 213 94% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 50% 20%;
+    --sidebar-accent-foreground: 213 90% 70%;
+    --sidebar-border: 220 13% 18%;
+    --sidebar-ring: 213 94% 56%;
+    --canvas: 220 13% 8%;
+    --canvas-foreground: 220 10% 90%;
+    --success: 142 60% 46%;
+    --success-foreground: 0 0% 100%;
+    --surface: 220 13% 15%;
+    --surface-foreground: 220 10% 88%;
+    --canvas-dot: 220 10% 22%;
+    --scrollbar-thumb: 220 6% 40%;
+  }
+
+  /* ---- Midnight ---- */
+  [data-theme="midnight"] {
+    --background: 225 25% 8%;
+    --foreground: 215 20% 88%;
+    --card: 225 25% 11%;
+    --card-foreground: 215 20% 88%;
+    --popover: 225 25% 11%;
+    --popover-foreground: 215 20% 88%;
+    --primary: 215 90% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 225 22% 15%;
+    --secondary-foreground: 215 18% 78%;
+    --muted: 225 22% 15%;
+    --muted-foreground: 215 12% 50%;
+    --accent: 215 45% 18%;
+    --accent-foreground: 215 85% 72%;
+    --destructive: 0 60% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 225 22% 17%;
+    --input: 225 22% 17%;
+    --ring: 215 90% 56%;
+    --chart-1: 215 90% 56%;
+    --chart-2: 195 60% 50%;
+    --chart-3: 240 40% 55%;
+    --chart-4: 45 70% 60%;
+    --chart-5: 30 80% 60%;
+    --sidebar-background: 225 25% 9%;
+    --sidebar-foreground: 215 12% 60%;
+    --sidebar-primary: 215 90% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 45% 18%;
+    --sidebar-accent-foreground: 215 85% 72%;
+    --sidebar-border: 225 22% 15%;
+    --sidebar-ring: 215 90% 56%;
+    --canvas: 225 28% 6%;
+    --canvas-foreground: 215 20% 88%;
+    --success: 165 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --surface: 225 25% 13%;
+    --surface-foreground: 215 20% 86%;
+    --canvas-dot: 225 20% 18%;
+    --scrollbar-thumb: 225 12% 35%;
+  }
+
+  /* ---- High Contrast ---- */
+  [data-theme="highcontrast"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 2%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 2%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 2%;
+    --primary: 213 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 2%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 32%;
+    --accent: 213 100% 92%;
+    --accent-foreground: 213 100% 30%;
+    --destructive: 0 90% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 72%;
+    --input: 0 0% 72%;
+    --ring: 213 100% 40%;
+    --chart-1: 213 100% 40%;
+    --chart-2: 173 70% 34%;
+    --chart-3: 197 50% 20%;
+    --chart-4: 43 80% 50%;
+    --chart-5: 27 90% 50%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 213 100% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 100% 92%;
+    --sidebar-accent-foreground: 213 100% 30%;
+    --sidebar-border: 0 0% 72%;
+    --sidebar-ring: 213 100% 40%;
+    --canvas: 0 0% 96%;
+    --canvas-foreground: 0 0% 2%;
+    --success: 142 80% 32%;
+    --success-foreground: 0 0% 100%;
+    --surface: 0 0% 96%;
+    --surface-foreground: 0 0% 2%;
+    --canvas-dot: 0 0% 70%;
+    --scrollbar-thumb: 0 0% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Smooth theme transitions */
+html[data-transitioning] *,
+html[data-transitioning] *::before,
+html[data-transitioning] *::after {
+  transition: background-color 250ms ease, color 250ms ease,
+    border-color 250ms ease, box-shadow 250ms ease, fill 250ms ease,
+    stroke 250ms ease !important;
+}
+
+/* macOS-style scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--scrollbar-thumb) / 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--scrollbar-thumb) / 0.5);
+}
+
+/* Canvas dot grid */
+.canvas-grid {
+  background-image: radial-gradient(
+    circle,
+    hsl(var(--canvas-dot) / 0.3) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
