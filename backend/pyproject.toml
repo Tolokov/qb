@@ -1,0 +1,33 @@
+[project]
+name = "query-builder-service"
+version = "0.1.0"
+description = "FastAPI backend: compile JSON query to Hadoop-compatible SQL"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "httpx>=0.28"]
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+include = '\.pyi?$'
+exclude = '''
+/(\.git|\.venv|venv|__pycache__)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = [".venv", "venv", "__pycache__"]
+known_first_party = ["app"]
+
+[tool.ruff]
+line-length = 120
+target-version = ["py310"]
+exclude = [".venv", "venv", "__pycache__"]
+select = ["E", "F", "I", "N", "W"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
