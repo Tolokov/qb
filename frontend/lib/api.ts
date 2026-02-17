@@ -1,6 +1,6 @@
 const API_BASE =
   typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000")
+    ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "")
     : "";
 
 export interface BackendColumn {
@@ -27,8 +27,10 @@ export interface BackendQueryPayload {
   limit?: number;
 }
 
+/** Ответ бекенда: эхо payload или скомпилированный SQL (когда будет реализовано). */
 export interface CompileResponse {
-  sql: string;
+  echo?: unknown;
+  sql?: string;
 }
 
 type FrontendJson = Record<string, unknown>;
@@ -124,7 +126,7 @@ export async function compileQueryOnBackend(
   const res = await fetch(`${API_BASE}/api/v1/query/compile`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ payload }),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -132,9 +134,15 @@ export async function compileQueryOnBackend(
     try {
       const j = JSON.parse(text) as { detail?: unknown };
       if (j.detail !== undefined) {
-        message = Array.isArray(j.detail)
-          ? (j.detail as Array<{ msg?: string }>).map((d) => d.msg ?? String(d)).join("; ")
-          : String(j.detail);
+        const detail = j.detail;
+        message = Array.isArray(detail)
+          ? (detail as Array<{ loc?: unknown[]; msg?: string; type?: string }>)
+              .map((d) => {
+                const loc = d.loc?.length ? d.loc.join(".") + ": " : "";
+                return loc + (d.msg ?? String(d));
+              })
+              .join("; ")
+          : String(detail);
       } else if (text) {
         message = text;
       }
@@ -144,4 +152,12 @@ export async function compileQueryOnBackend(
     throw new Error(message);
   }
   return res.json() as Promise<CompileResponse>;
+}
+
+/** Строковое представление ответа бекенда для отображения (SQL или эхо payload). */
+export function formatBackendResponse(data: CompileResponse): string {
+  if (data.sql != null && data.sql !== "") return data.sql;
+  if (data.echo !== undefined)
+    return JSON.stringify(data.echo, null, 2);
+  return "";
 }

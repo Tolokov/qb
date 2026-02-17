@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routes.query import router as query_router
 from app.config import SETTINGS
-from app.middleware.security import SecurityMiddleware
 
 
 def create_app() -> FastAPI:
@@ -14,7 +13,6 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
     )
-    app.add_middleware(SecurityMiddleware, settings=SETTINGS)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=SETTINGS.cors_origins_list,

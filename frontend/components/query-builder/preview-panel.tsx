@@ -19,6 +19,7 @@ import { useQueryStore, blocksToJson, blocksToSql } from "@/lib/query-store";
 import {
   frontendJsonToBackendPayload,
   compileQueryOnBackend,
+  formatBackendResponse,
 } from "@/lib/api";
 import type { QueryHistoryEntry } from "@/lib/types";
 
@@ -80,9 +81,9 @@ export default function PreviewPanel() {
     try {
       const json = blocksToJson(blocks) as Record<string, unknown>;
       const payload = frontendJsonToBackendPayload(json);
-      const { sql } = await compileQueryOnBackend(payload);
+      const result = await compileQueryOnBackend(payload);
       const time = Date.now() - start;
-      setBackendResponse(sql);
+      setBackendResponse(formatBackendResponse(result));
       setLastResult({ status: "success", time });
 
       const entry: QueryHistoryEntry = {
@@ -157,7 +158,7 @@ export default function PreviewPanel() {
         <div className="border-b border-border px-4 py-3 bg-muted/30">
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              SQL с бекенда (для Spark)
+              Ответ бекенда
             </span>
             <Button
               variant="outline"

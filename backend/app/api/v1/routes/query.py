@@ -1,19 +1,21 @@
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
+from app.api.v1.schemas.query import QueryRequest, QueryResponse
 from app.dependencies import get_query_service
 from app.services.query_service import QueryService
 
 router = APIRouter()
 
 
-@router.post("/query/compile")
+@router.post(
+    "/query/compile",
+    response_model=QueryResponse,
+    summary="Эхо JSON",
+    description="Принимает JSON (payload), возвращает эхо.",
+)
 def compile_query_route(
-    payload: dict = Body(...),
+    body: QueryRequest,
     service: QueryService = Depends(get_query_service),
-):
-    try:
-        return service.execute(payload)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка компиляции: {e!s}")
+) -> QueryResponse:
+    result = service.execute(body.payload)
+    return QueryResponse(**result)

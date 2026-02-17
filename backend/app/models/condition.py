@@ -1,13 +1,12 @@
-from typing import Any, List, Optional
-
-from pydantic import BaseModel
-
-
-class Condition(BaseModel):
-    field: Optional[str] = None
-    operator: str
-    value: Optional[Any] = None
-    conditions: Optional[List["Condition"]] = None
+from dataclasses import dataclass
+from typing import Any
 
 
-Condition.model_rebuild()
+@dataclass
+class Condition:
+    """Минимальная модель для совместимости с ConditionBuilderBase."""
+
+    field: str | None = None
+    operator: str | None = None
+    value: Any = None
+    conditions: list["Condition"] | None = None

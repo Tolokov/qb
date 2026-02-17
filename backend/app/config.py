@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     APP_TITLE: str = "Query Builder Service"
     APP_DESC: str = "Принимает декларативное JSON-описание запроса и компилирует его в Hadoop-совместимый SQL."
     APP_VERSION: str = Field(default="0.1.0", alias="version")
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     @property
     def cors_origins_list(self) -> list[str]:
