@@ -81,13 +81,18 @@ function DraggableItem({ item }: { item: LibraryItem }) {
     addBlock(item);
   };
 
+  const onRowDoubleClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest?.("button")) return;
+    addToCanvas(e);
+  };
+
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
       style={style}
-      onDoubleClick={addToCanvas}
+      onDoubleClick={onRowDoubleClick}
       className={`group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px] cursor-grab active:cursor-grabbing select-none transition-all duration-150 ${colors.bg} ${colors.border} ${colors.text} ${isDragging ? "opacity-40 shadow-xl scale-[1.03]" : "hover:shadow-sm hover:translate-x-0.5"}`}
     >
       <GripVertical className="h-3 w-3 opacity-0 group-hover:opacity-30 transition-opacity shrink-0" />
