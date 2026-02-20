@@ -174,7 +174,8 @@ export default function SidebarLibrary() {
       <ScrollArea className="flex-1">
         <div className="p-3 flex flex-col gap-1">
           {Object.entries(groupedItems).map(([cat, items]) => {
-            const isCollapsed = collapsed[cat];
+            const hasSearch = searchQuery.trim().length > 0;
+            const isCollapsed = hasSearch ? false : collapsed[cat];
             return (
               <div key={cat} className="mb-1">
                 <button
