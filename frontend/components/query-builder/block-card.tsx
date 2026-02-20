@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CATEGORY_COLORS, type QueryBlock } from "@/lib/types";
 import { useQueryStore } from "@/lib/query-store";
+import type { ValidationError } from "@/lib/validation";
 
 function getIconForType(type: string): React.ComponentType<{ className?: string }> {
   const map: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -85,6 +86,8 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
   const setActiveBlockId = useQueryStore((s) => s.setActiveBlockId);
   const updateBlockConfig = useQueryStore((s) => s.updateBlockConfig);
   const removeBlock = useQueryStore((s) => s.removeBlock);
+  const validationErrors = useQueryStore((s) => s.validationErrors);
+  const blockErrors = validationErrors.filter((e) => e.blockId === block.id);
 
   const {
     attributes,
@@ -157,7 +160,7 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
 
           {/* Config */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <ConfigInputs block={block} onUpdate={handleUpdateConfig} />
+            <ConfigInputs block={block} onUpdate={handleUpdateConfig} errors={blockErrors} />
           </div>
         </div>
 
@@ -200,57 +203,114 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
 
 // ---- Config Inputs ----
 
+function getError(errors: ValidationError[], field: string): ValidationError | undefined {
+  return errors.find((e) => e.field === field);
+}
+
 function ConfigInputs({
   block,
   onUpdate,
+  errors,
 }: {
   block: QueryBlock;
   onUpdate: (key: string, value: unknown) => void;
+  errors: ValidationError[];
 }) {
-  const inputClass =
+  const baseInputClass =
     "h-7 text-xs bg-card/80 border-border/60 font-mono rounded-lg focus-visible:ring-1 focus-visible:ring-primary/30 placeholder:text-muted-foreground/50";
+  const inputClass = (field: string) => {
+    const err = getError(errors, field);
+    return `${baseInputClass} ${err ? "border-destructive focus-visible:ring-destructive/50" : ""}`;
+  };
+  const isEmpty = (val: unknown) => String(val ?? "").trim() === "";
+  const Required = () => <span className="text-destructive/80 font-normal" aria-hidden>*</span>;
 
   switch (block.type) {
-    case "source":
+    case "source": {
+      const tableEmpty = isEmpty(block.config.table);
       return (
-        <Input
-          value={String(block.config.table || "")}
-          onChange={(e) => onUpdate("table", e.target.value)}
-          placeholder="table_name"
-          className={`${inputClass} w-36`}
-        />
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1">
+            <Input
+              value={String(block.config.table || "")}
+              onChange={(e) => onUpdate("table", e.target.value)}
+              placeholder={tableEmpty ? "table_name (обяз.)" : "table_name"}
+              className={`${inputClass("table")} w-36`}
+              aria-required
+              aria-invalid={!!getError(errors, "table")}
+              aria-describedby={getError(errors, "table") ? `err-${block.id}-table` : undefined}
+            />
+            {tableEmpty && <Required />}
+          </div>
+          {getError(errors, "table") && (
+            <span id={`err-${block.id}-table`} className="text-[10px] text-destructive" role="alert">
+              {getError(errors, "table")?.message}
+            </span>
+          )}
+        </div>
       );
+    }
 
-    case "column":
+    case "column": {
+      const columnEmpty = isEmpty(block.config.column);
       return (
         <>
-          <Input
-            value={String(block.config.column || "")}
-            onChange={(e) => onUpdate("column", e.target.value)}
-            placeholder="column"
-            className={`${inputClass} w-28`}
-          />
-          <span className="text-[10px] text-muted-foreground font-medium">
-            AS
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                value={String(block.config.column || "")}
+                onChange={(e) => onUpdate("column", e.target.value)}
+                placeholder={columnEmpty ? "column или * (обяз.)" : "column или *"}
+                className={`${inputClass("column")} w-28`}
+                aria-required
+                aria-invalid={!!getError(errors, "column")}
+                aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
+              />
+              {columnEmpty && <Required />}
+            </div>
+            {getError(errors, "column") && (
+              <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "column")?.message}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground font-medium">AS</span>
           <Input
             value={String(block.config.alias || "")}
             onChange={(e) => onUpdate("alias", e.target.value)}
             placeholder="alias"
-            className={`${inputClass} w-24`}
+            className={`${baseInputClass} w-24`}
           />
         </>
       );
+    }
 
-    case "filter":
+    case "filter": {
+      const filterColumnEmpty = isEmpty(block.config.column);
+      const valueEmpty = isEmpty(block.config.value);
+      const valueLowEmpty = isEmpty(block.config.valueLow);
+      const valueHighEmpty = isEmpty(block.config.valueHigh);
       return (
         <>
-          <Input
-            value={String(block.config.column || "")}
-            onChange={(e) => onUpdate("column", e.target.value)}
-            placeholder="column"
-            className={`${inputClass} w-24`}
-          />
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                value={String(block.config.column || "")}
+                onChange={(e) => onUpdate("column", e.target.value)}
+                placeholder={filterColumnEmpty ? "column (обяз.)" : "column"}
+                className={`${inputClass("column")} w-24`}
+                aria-required
+                aria-invalid={!!getError(errors, "column")}
+                aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
+              />
+              {filterColumnEmpty && <Required />}
+            </div>
+            {getError(errors, "column") && (
+              <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "column")?.message}
+              </span>
+            )}
+          </div>
           <Select
             value={String(block.config.operator || "=")}
             onValueChange={(v) => onUpdate("operator", v)}
@@ -273,34 +333,65 @@ function ConfigInputs({
               <>
                 {block.config.operator === "BETWEEN" ? (
                   <>
-                    <Input
-                      value={String(block.config.valueLow || "")}
-                      onChange={(e) => onUpdate("valueLow", e.target.value)}
-                      placeholder="low"
-                      className={`${inputClass} w-16`}
-                    />
-                    <span className="text-[10px] text-muted-foreground font-medium">
-                      AND
-                    </span>
-                    <Input
-                      value={String(block.config.valueHigh || "")}
-                      onChange={(e) => onUpdate("valueHigh", e.target.value)}
-                      placeholder="high"
-                      className={`${inputClass} w-16`}
-                    />
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={String(block.config.valueLow || "")}
+                          onChange={(e) => onUpdate("valueLow", e.target.value)}
+                          placeholder={valueLowEmpty ? "от (обяз.)" : "от"}
+                          className={`${inputClass("valueLow")} w-16`}
+                          aria-required
+                          aria-invalid={!!getError(errors, "valueLow")}
+                        />
+                        {valueLowEmpty && <Required />}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-medium">AND</span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={String(block.config.valueHigh || "")}
+                          onChange={(e) => onUpdate("valueHigh", e.target.value)}
+                          placeholder={valueHighEmpty ? "до (обяз.)" : "до"}
+                          className={`${inputClass("valueHigh")} w-16`}
+                          aria-required
+                          aria-invalid={!!getError(errors, "valueHigh")}
+                        />
+                        {valueHighEmpty && <Required />}
+                      </div>
+                      {(getError(errors, "valueLow") || getError(errors, "valueHigh")) && (
+                        <span className="text-[10px] text-destructive" role="alert">
+                          {getError(errors, "valueLow")?.message ?? getError(errors, "valueHigh")?.message}
+                        </span>
+                      )}
+                    </div>
                   </>
                 ) : (
-                  <Input
-                    value={String(block.config.value || "")}
-                    onChange={(e) => onUpdate("value", e.target.value)}
-                    placeholder="value"
-                    className={`${inputClass} w-24`}
-                  />
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={String(block.config.value || "")}
+                        onChange={(e) => onUpdate("value", e.target.value)}
+                        placeholder={valueEmpty ? "value (обяз.)" : "value"}
+                        className={`${inputClass("value")} w-24`}
+                        aria-required
+                        aria-invalid={!!getError(errors, "value")}
+                        aria-describedby={getError(errors, "value") ? `err-${block.id}-value` : undefined}
+                      />
+                      {valueEmpty && <Required />}
+                    </div>
+                    {getError(errors, "value") && (
+                      <span id={`err-${block.id}-value`} className="text-[10px] text-destructive" role="alert">
+                        {getError(errors, "value")?.message}
+                      </span>
+                    )}
+                  </div>
                 )}
               </>
             )}
         </>
       );
+    }
 
     case "logical":
       return (
@@ -321,7 +412,10 @@ function ConfigInputs({
         </Select>
       );
 
-    case "aggregation":
+    case "aggregation": {
+      const aggColumnRequired = block.config.function !== "COUNT";
+      const aggColumnEmpty = isEmpty(block.config.column);
+      const showAggRequired = aggColumnRequired && aggColumnEmpty;
       return (
         <>
           <Select
@@ -339,59 +433,111 @@ function ConfigInputs({
               ))}
             </SelectContent>
           </Select>
-          <span className="text-[10px] text-muted-foreground font-mono">
-            {"("}
-          </span>
-          <Input
-            value={String(block.config.column || "")}
-            onChange={(e) => onUpdate("column", e.target.value)}
-            placeholder="column"
-            className={`${inputClass} w-20`}
-          />
-          <span className="text-[10px] text-muted-foreground font-mono">
-            {")"}
-          </span>
-          <span className="text-[10px] text-muted-foreground font-medium">
-            AS
-          </span>
+          <span className="text-[10px] text-muted-foreground font-mono">{"("}</span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                value={String(block.config.column || "")}
+                onChange={(e) => onUpdate("column", e.target.value)}
+                placeholder={showAggRequired ? "column (обяз.)" : "column или *"}
+                className={`${inputClass("column")} w-20`}
+                aria-required={aggColumnRequired}
+                aria-invalid={!!getError(errors, "column")}
+                aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
+              />
+              {showAggRequired && <Required />}
+            </div>
+            {getError(errors, "column") && (
+              <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "column")?.message}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground font-mono">{")"}</span>
+          <span className="text-[10px] text-muted-foreground font-medium">AS</span>
           <Input
             value={String(block.config.alias || "")}
             onChange={(e) => onUpdate("alias", e.target.value)}
             placeholder="alias"
-            className={`${inputClass} w-20`}
+            className={`${baseInputClass} w-20`}
           />
         </>
       );
+    }
 
     case "grouping":
       if (block.label === "HAVING") {
+        const conditionEmpty = isEmpty(block.config.condition);
         return (
-          <Input
-            value={String(block.config.condition || "")}
-            onChange={(e) => onUpdate("condition", e.target.value)}
-            placeholder="condition expression"
-            className={`${inputClass} w-44`}
-          />
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                value={String(block.config.condition || "")}
+                onChange={(e) => onUpdate("condition", e.target.value)}
+                placeholder={conditionEmpty ? "condition (обяз.)" : "condition"}
+                className={`${inputClass("condition")} w-44`}
+                aria-required
+                aria-invalid={!!getError(errors, "condition")}
+                aria-describedby={getError(errors, "condition") ? `err-${block.id}-condition` : undefined}
+              />
+              {conditionEmpty && <Required />}
+            </div>
+            {getError(errors, "condition") && (
+              <span id={`err-${block.id}-condition`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "condition")?.message}
+              </span>
+            )}
+          </div>
         );
       }
-      return (
-        <Input
-          value={String(block.config.column || "")}
-          onChange={(e) => onUpdate("column", e.target.value)}
-          placeholder="column"
-          className={`${inputClass} w-32`}
-        />
-      );
+      {
+        const groupByColumnEmpty = isEmpty(block.config.column);
+        return (
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                value={String(block.config.column || "")}
+                onChange={(e) => onUpdate("column", e.target.value)}
+                placeholder={groupByColumnEmpty ? "column (обяз.)" : "column"}
+                className={`${inputClass("column")} w-32`}
+                aria-required
+                aria-invalid={!!getError(errors, "column")}
+                aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
+              />
+              {groupByColumnEmpty && <Required />}
+            </div>
+            {getError(errors, "column") && (
+              <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "column")?.message}
+              </span>
+            )}
+          </div>
+        );
+      }
 
-    case "ordering":
+    case "ordering": {
+      const orderColumnEmpty = isEmpty(block.config.column);
       return (
         <>
-          <Input
-            value={String(block.config.column || "")}
-            onChange={(e) => onUpdate("column", e.target.value)}
-            placeholder="column"
-            className={`${inputClass} w-24`}
-          />
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                value={String(block.config.column || "")}
+                onChange={(e) => onUpdate("column", e.target.value)}
+                placeholder={orderColumnEmpty ? "column (обяз.)" : "column"}
+                className={`${inputClass("column")} w-24`}
+                aria-required
+                aria-invalid={!!getError(errors, "column")}
+                aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
+              />
+              {orderColumnEmpty && <Required />}
+            </div>
+            {getError(errors, "column") && (
+              <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "column")?.message}
+              </span>
+            )}
+          </div>
           <Select
             value={String(block.config.direction || "ASC")}
             onValueChange={(v) => onUpdate("direction", v)}
@@ -410,39 +556,71 @@ function ConfigInputs({
           </Select>
         </>
       );
+    }
 
-    case "limit":
+    case "limit": {
+      const limitVal = block.config.limit;
+      const limitEmpty = limitVal === undefined || limitVal === null || String(limitVal).trim() === "";
       return (
         <>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                min={1}
+                value={String(block.config.limit ?? "")}
+                onChange={(e) => onUpdate("limit", e.target.value === "" ? undefined : Number(e.target.value))}
+                placeholder={limitEmpty ? "число (обяз.)" : "число"}
+                className={`${inputClass("limit")} w-20`}
+                aria-required
+                aria-invalid={!!getError(errors, "limit")}
+                aria-describedby={getError(errors, "limit") ? `err-${block.id}-limit` : undefined}
+              />
+              {limitEmpty && <Required />}
+            </div>
+            {getError(errors, "limit") && (
+              <span id={`err-${block.id}-limit`} className="text-[10px] text-destructive" role="alert">
+                {getError(errors, "limit")?.message}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground font-medium">OFFSET</span>
           <Input
             type="number"
-            value={String(block.config.limit || "")}
-            onChange={(e) => onUpdate("limit", Number(e.target.value))}
-            placeholder="limit"
-            className={`${inputClass} w-20`}
-          />
-          <span className="text-[10px] text-muted-foreground font-medium">
-            OFFSET
-          </span>
-          <Input
-            type="number"
-            value={String(block.config.offset || "")}
-            onChange={(e) => onUpdate("offset", Number(e.target.value))}
+            min={0}
+            value={String(block.config.offset ?? "")}
+            onChange={(e) => onUpdate("offset", e.target.value === "" ? undefined : Number(e.target.value))}
             placeholder="0"
-            className={`${inputClass} w-20`}
+            className={`${baseInputClass} w-20`}
           />
         </>
       );
+    }
 
-    case "subquery":
+    case "subquery": {
+      const aliasEmpty = isEmpty(block.config.alias);
       return (
-        <Input
-          value={String(block.config.alias || "")}
-          onChange={(e) => onUpdate("alias", e.target.value)}
-          placeholder="alias"
-          className={`${inputClass} w-28`}
-        />
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1">
+            <Input
+              value={String(block.config.alias || "")}
+              onChange={(e) => onUpdate("alias", e.target.value)}
+              placeholder={aliasEmpty ? "alias (обяз.)" : "alias"}
+              className={`${inputClass("alias")} w-28`}
+              aria-required
+              aria-invalid={!!getError(errors, "alias")}
+              aria-describedby={getError(errors, "alias") ? `err-${block.id}-alias` : undefined}
+            />
+            {aliasEmpty && <Required />}
+          </div>
+          {getError(errors, "alias") && (
+            <span id={`err-${block.id}-alias`} className="text-[10px] text-destructive" role="alert">
+              {getError(errors, "alias")?.message}
+            </span>
+          )}
+        </div>
       );
+    }
 
     default:
       return null;

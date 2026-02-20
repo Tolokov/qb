@@ -22,11 +22,15 @@ import {
   formatBackendResponse,
 } from "@/lib/api";
 import type { QueryHistoryEntry } from "@/lib/types";
+import { validateBlocks } from "@/lib/validation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PreviewPanel() {
   const blocks = useQueryStore((s) => s.blocks);
   const addHistoryEntry = useQueryStore((s) => s.addHistoryEntry);
   const historyLength = useQueryStore((s) => s.history.length);
+  const setValidationErrors = useQueryStore((s) => s.setValidationErrors);
+  const { toast } = useToast();
 
   const [copiedJson, setCopiedJson] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
@@ -71,6 +75,21 @@ export default function PreviewPanel() {
 
   const runQuery = useCallback(async () => {
     if (blocks.length === 0) return;
+
+    const validation = validateBlocks(blocks);
+    if (!validation.valid) {
+      setValidationErrors(validation.errors);
+      const messages = validation.errors.map((e) => e.message);
+      const unique = [...new Set(messages)];
+      toast({
+        title: "Заполните обязательные поля",
+        description: unique.length <= 3 ? unique.join(" ") : `${unique.slice(0, 2).join(" ")} и ещё ${unique.length - 2} полей.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setValidationErrors([]);
     setIsRunning(true);
     setLastResult(null);
     setBackendResponse(null);
@@ -109,7 +128,7 @@ export default function PreviewPanel() {
     } finally {
       setIsRunning(false);
     }
-  }, [blocks, historyLength, addHistoryEntry, jsonOutput, sqlOutput]);
+  }, [blocks, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast]);
 
   return (
     <div className="flex h-full flex-col bg-card">

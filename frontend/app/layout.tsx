@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 const _inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const _jetbrainsMono = JetBrains_Mono({
@@ -39,7 +40,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased overflow-hidden">{children}</body>
+      <body className="font-sans antialiased overflow-hidden">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

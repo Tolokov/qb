@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { QueryBlock, QueryHistoryEntry, LibraryItem } from "./types";
+import type { ValidationError } from "./validation";
 
 function updateBlockInTree(
   blocks: QueryBlock[],
@@ -265,6 +266,7 @@ export interface QueryBuilderState {
   history: QueryHistoryEntry[];
   showHistory: boolean;
   dragOverContainerId: string | null;
+  validationErrors: ValidationError[];
 
   addBlock: (item: LibraryItem, parentId?: string) => void;
   removeBlock: (id: string) => void;
@@ -276,6 +278,7 @@ export interface QueryBuilderState {
   clearBlocks: () => void;
   setActiveBlockId: (id: string | null) => void;
   setDragOverContainerId: (id: string | null) => void;
+  setValidationErrors: (errors: ValidationError[]) => void;
   setShowHistory: (show: boolean) => void;
   addHistoryEntry: (entry: QueryHistoryEntry) => void;
   removeHistoryEntry: (id: string) => void;
@@ -293,6 +296,7 @@ export const useQueryStore = create<QueryBuilderState>()(
       history: [],
       showHistory: false,
       dragOverContainerId: null,
+      validationErrors: [],
 
       addBlock: (item, parentId) => {
         const newBlock: QueryBlock = {
@@ -322,6 +326,7 @@ export const useQueryStore = create<QueryBuilderState>()(
             ...b,
             config: { ...b.config, [key]: value },
           })),
+          validationErrors: state.validationErrors.filter((e) => e.blockId !== id),
         })),
 
       reorderBlocks: (activeId, overId) =>
@@ -361,6 +366,7 @@ export const useQueryStore = create<QueryBuilderState>()(
 
       setActiveBlockId: (id) => set({ activeBlockId: id }),
       setDragOverContainerId: (id) => set({ dragOverContainerId: id }),
+      setValidationErrors: (errors) => set({ validationErrors: errors }),
 
       setShowHistory: (show) => set({ showHistory: show }),
 
