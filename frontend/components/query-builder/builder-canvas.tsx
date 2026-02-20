@@ -97,7 +97,7 @@ export default function BuilderCanvas() {
               items={blocks.map((b) => b.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2.5 items-start content-start">
                 {blocks.map((block, index) => (
                   <BlockCard key={block.id} block={block} index={index} />
                 ))}
