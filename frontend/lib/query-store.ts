@@ -303,6 +303,7 @@ export const useQueryStore = create<QueryBuilderState>()(
           id: crypto.randomUUID(),
           type: item.type,
           label: item.label,
+          icon: item.icon,
           config: { ...item.defaultConfig },
           children:
             item.type === "subquery" || item.type === "logical" ? [] : undefined,

@@ -22,6 +22,8 @@ export interface QueryBlock {
   id: string;
   type: BlockCategory;
   label: string;
+  /** Имя иконки из библиотеки (Database, Columns3, Filter, …) для отображения как в сайдбаре */
+  icon?: string;
   config: Record<string, unknown>;
   children?: QueryBlock[];
 }
