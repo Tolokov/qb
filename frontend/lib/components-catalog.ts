@@ -284,7 +284,7 @@ const LIMIT_ITEMS: LibraryItem[] = [
     label: "LIMIT",
     description: "Максимальное число строк и опционально OFFSET",
     icon: "Minus",
-    defaultConfig: { limit: 100, offset: 0 },
+    defaultConfig: { limit: 10, offset: 0 },
   },
 ];
 
