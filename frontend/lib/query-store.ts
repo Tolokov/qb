@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { QueryBlock, QueryHistoryEntry, LibraryItem } from "./types";
 import type { ValidationError } from "./validation";
+import { getVisualBlockOrder } from "./canvas-groups";
 
 function updateBlockInTree(
   blocks: QueryBlock[],
@@ -200,9 +201,15 @@ export function blocksToSql(blocks: QueryBlock[]): string {
   }
   parts.push(`SELECT ${selects.length > 0 ? selects.join(", ") : "*"}`);
 
-  if (Array.isArray(json.from) && json.from.length > 0) {
-    parts.push(`FROM ${(json.from as string[]).join(", ")}`);
+  const fromParts: string[] = [];
+  for (const b of blocks) {
+    if (b.type === "source" && b.config.table) {
+      fromParts.push(String(b.config.table));
+    } else if (b.type === "subquery" && b.children && b.children.length > 0 && b.config.alias) {
+      fromParts.push(`(${blocksToSql(b.children).replace(/;\s*$/, "")}) AS ${b.config.alias}`);
+    }
   }
+  if (fromParts.length > 0) parts.push(`FROM ${fromParts.join(", ")}`);
 
   if (json.where) {
     const w = json.where as Record<string, unknown>;
@@ -275,6 +282,8 @@ export interface QueryBuilderState {
   moveBlockToContainer: (blockId: string, containerId: string) => void;
   moveBlockToRoot: (blockId: string, index?: number) => void;
   setBlocks: (blocks: QueryBlock[]) => void;
+  setRootBlocksOrder: (orderedIds: string[]) => void;
+  reorderRootBlocks: (activeId: string, overId: string) => void;
   clearBlocks: () => void;
   setActiveBlockId: (id: string | null) => void;
   setDragOverContainerId: (id: string | null) => void;
@@ -363,6 +372,37 @@ export const useQueryStore = create<QueryBuilderState>()(
         }),
 
       setBlocks: (blocks) => set({ blocks }),
+      setRootBlocksOrder: (orderedIds) =>
+        set((state) => ({
+          blocks: orderedIds
+            .map((id) => state.blocks.find((b) => b.id === id))
+            .filter((b): b is QueryBlock => b != null),
+        })),
+      reorderRootBlocks: (activeId, overId) =>
+        set((state) => {
+          const visualOrder = getVisualBlockOrder(state.blocks);
+          if (!visualOrder.includes(overId)) return state;
+          const newOrder = visualOrder.filter((id) => id !== activeId);
+          const overIndex = newOrder.indexOf(overId);
+          if (overIndex < 0) return state;
+          newOrder.splice(overIndex, 0, activeId);
+          const block = findBlockInTree(state.blocks, activeId);
+          if (!block) return state;
+          if (state.blocks.some((b) => b.id === activeId)) {
+            return {
+              blocks: newOrder
+                .map((id) => state.blocks.find((b) => b.id === id))
+                .filter((b): b is QueryBlock => b != null),
+            };
+          }
+          const without = removeBlockFromTree(state.blocks, activeId);
+          const newBlocks = newOrder
+            .map((id) =>
+              id === activeId ? block : findBlockInTree(without, id)
+            )
+            .filter((b): b is QueryBlock => b != null);
+          return { blocks: newBlocks };
+        }),
       clearBlocks: () => set({ blocks: [], activeBlockId: null }),
 
       setActiveBlockId: (id) => set({ activeBlockId: id }),

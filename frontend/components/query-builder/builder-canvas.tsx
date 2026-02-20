@@ -16,6 +16,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import BlockCard from "./block-card";
 import { useQueryStore } from "@/lib/query-store";
+import { groupBlocksIntoRows } from "@/lib/canvas-groups";
 
 export default function BuilderCanvas() {
   const blocks = useQueryStore((s) => s.blocks);
@@ -92,18 +93,36 @@ export default function BuilderCanvas() {
                 Drag items from the sidebar to start building your SQL query visually
               </p>
             </div>
-          ) : (
-            <SortableContext
-              items={blocks.map((b) => b.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="flex flex-wrap gap-2.5 items-start content-start">
-                {blocks.map((block, index) => (
-                  <BlockCard key={block.id} block={block} index={index} />
-                ))}
-              </div>
-            </SortableContext>
-          )}
+          ) : (() => {
+              const rows = groupBlocksIntoRows(blocks);
+              const visualOrder = rows.flatMap((r) => r);
+              const visualIds = visualOrder.map((b) => b.id);
+              return (
+                <SortableContext
+                  items={visualIds}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex flex-col gap-3">
+                    {rows.map((row) =>
+                      row.length > 0 ? (
+                        <div
+                          key={row.map((b) => b.id).join("-")}
+                          className="flex flex-wrap gap-2.5 items-start content-start"
+                        >
+                          {row.map((block) => (
+                            <BlockCard
+                              key={block.id}
+                              block={block}
+                              index={visualOrder.findIndex((b) => b.id === block.id)}
+                            />
+                          ))}
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                </SortableContext>
+              );
+            })()}
 
           {/* Drop hint */}
           {blocks.length > 0 && (

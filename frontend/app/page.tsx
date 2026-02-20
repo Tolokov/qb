@@ -32,7 +32,7 @@ export default function QueryBuilderPage() {
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
 
   const addBlock = useQueryStore((s) => s.addBlock);
-  const reorderBlocks = useQueryStore((s) => s.reorderBlocks);
+  const reorderRootBlocks = useQueryStore((s) => s.reorderRootBlocks);
   const moveBlockToContainer = useQueryStore((s) => s.moveBlockToContainer);
   const moveBlockToRoot = useQueryStore((s) => s.moveBlockToRoot);
   const setDragOverContainerId = useQueryStore((s) => s.setDragOverContainerId);
@@ -118,10 +118,10 @@ export default function QueryBuilderPage() {
         return;
       }
 
-      // Reorder at root
-      reorderBlocks(activeId, overId);
+      // Reorder at root (по визуальному порядку строк)
+      reorderRootBlocks(activeId, overId);
     },
-    [addBlock, reorderBlocks, moveBlockToContainer, moveBlockToRoot, setDragOverContainerId]
+    [addBlock, reorderRootBlocks, moveBlockToContainer, moveBlockToRoot, setDragOverContainerId]
   );
 
   if (!mounted) {

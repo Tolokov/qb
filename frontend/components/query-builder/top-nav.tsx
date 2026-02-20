@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { Braces, Clock, Trash2, Sun, Moon, Monitor, Eye } from "lucide-react";
+import { Braces, Clock, Trash2, Sun, Moon, Monitor, Eye, LayoutTemplate, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQueryStore } from "@/lib/query-store";
+import { QUERY_TEMPLATES } from "@/lib/query-templates";
 import { useTheme, type Theme } from "@/hooks/use-theme";
 
 const themeIcons: Record<Theme, React.ComponentType<{ className?: string }>> = {
@@ -30,6 +31,8 @@ const themeIcons: Record<Theme, React.ComponentType<{ className?: string }>> = {
 
 export default function TopNav() {
   const blocks = useQueryStore((s) => s.blocks);
+  const setBlocks = useQueryStore((s) => s.setBlocks);
+  const setActiveBlockId = useQueryStore((s) => s.setActiveBlockId);
   const clearBlocks = useQueryStore((s) => s.clearBlocks);
   const setShowHistory = useQueryStore((s) => s.setShowHistory);
   const historyCount = useQueryStore((s) => s.history.length);
@@ -124,6 +127,47 @@ export default function TopNav() {
                   </DropdownMenuItem>
                 );
               })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Template */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 rounded-lg px-2.5 text-muted-foreground hover:text-card-foreground hover:bg-secondary/80"
+              >
+                <LayoutTemplate className="h-4 w-4" />
+                <span className="text-xs font-medium">Шаблон</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                <span className="sr-only">Выбрать шаблон запроса</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={6}
+              className="w-64 rounded-xl shadow-xl"
+            >
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Query template
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {QUERY_TEMPLATES.map((tpl) => (
+                <DropdownMenuItem
+                  key={tpl.id}
+                  onClick={() => {
+                setBlocks(tpl.getBlocks());
+                setActiveBlockId(null);
+              }}
+                  className="flex flex-col items-start gap-0.5 rounded-lg py-2.5 cursor-pointer"
+                >
+                  <span className="text-[12px] font-medium">{tpl.label}</span>
+                  <span className="text-[10px] text-muted-foreground leading-snug">
+                    {tpl.description}
+                  </span>
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
