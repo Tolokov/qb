@@ -9,15 +9,21 @@ import {
   Columns3,
   Filter,
   GitMerge,
+  GitBranch,
+  Ban,
   Hash,
+  Plus,
+  TrendingUp,
+  ArrowDown,
+  ArrowUp,
   LayoutGrid,
   ArrowUpNarrowWide,
+  ArrowDownNarrowWide,
   Minus,
   Braces,
   X,
   GripVertical,
   ChevronDown,
-  Plus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,8 +38,29 @@ import { CATEGORY_COLORS, type QueryBlock } from "@/lib/types";
 import { useQueryStore } from "@/lib/query-store";
 import type { ValidationError } from "@/lib/validation";
 
-function getIconForType(type: string): React.ComponentType<{ className?: string }> {
-  const map: Record<string, React.ComponentType<{ className?: string }>> = {
+/** Карта иконок по имени (как в библиотеке компонентов) */
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Database,
+  Columns3,
+  Filter,
+  GitMerge,
+  GitBranch,
+  Ban,
+  Hash,
+  Plus,
+  TrendingUp,
+  ArrowDown,
+  ArrowUp,
+  LayoutGrid,
+  ArrowUpNarrowWide,
+  ArrowDownNarrowWide,
+  Minus,
+  Braces,
+};
+
+function getIconForBlock(block: QueryBlock): React.ComponentType<{ className?: string }> {
+  if (block.icon && ICON_MAP[block.icon]) return ICON_MAP[block.icon];
+  const typeMap: Record<string, React.ComponentType<{ className?: string }>> = {
     source: Database,
     column: Columns3,
     filter: Filter,
@@ -44,7 +71,7 @@ function getIconForType(type: string): React.ComponentType<{ className?: string 
     limit: Minus,
     subquery: Braces,
   };
-  return map[type] || Database;
+  return typeMap[block.type] ?? Database;
 }
 
 interface BlockCardProps {
@@ -104,7 +131,7 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
   };
 
   const colors = CATEGORY_COLORS[block.type];
-  const Icon = getIconForType(block.type);
+  const Icon = getIconForBlock(block);
   const isActive = activeBlockId === block.id;
   const hasChildren = block.children !== undefined;
   const isContainer = block.type === "subquery" || block.type === "logical";
@@ -113,11 +140,16 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
     updateBlockConfig(block.id, key, value);
   };
 
+  const isColumnBlock = block.type === "column";
+  const isSourceBlock = block.type === "source";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`group relative rounded-xl border transition-all duration-200 ${colors.bg} ${colors.border} ${
+        isSourceBlock ? "w-full" : isColumnBlock ? "w-fit max-w-full rounded-lg" : ""
+      } ${
         isDragging ? "opacity-40 shadow-2xl z-50 scale-[1.02]" : "shadow-sm hover:shadow-md"
       } ${isActive ? "ring-2 ring-primary/25 shadow-md" : ""} ${depth > 0 ? "ml-4" : ""}`}
       onClick={(e) => {
@@ -133,33 +165,44 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
         </>
       )}
 
-      {/* Header */}
-      <div className="flex items-start gap-2.5 p-3 pb-2">
+      {/* Header: компактный только для COLUMN */}
+      <div
+        className={`flex items-start gap-2.5 ${isColumnBlock ? "p-2 pb-1.5" : "p-3 pb-2"}`}
+      >
         <div
           {...attributes}
           {...listeners}
-          className="mt-0.5 cursor-grab active:cursor-grabbing rounded-md p-1 hover:bg-foreground/5 transition-colors shrink-0"
+          className={`mt-0.5 cursor-grab active:cursor-grabbing rounded-md hover:bg-foreground/5 transition-colors shrink-0 ${isColumnBlock ? "p-0.5" : "p-1"}`}
         >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <GripVertical
+            className={`text-muted-foreground/50 ${isColumnBlock ? "h-3 w-3" : "h-3.5 w-3.5"}`}
+          />
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          <div
+            className={`flex items-center gap-2 ${isColumnBlock ? "mb-1.5 gap-1.5" : "mb-2"}`}
+          >
             <div
-              className={`flex h-5 w-5 items-center justify-center rounded-md ${colors.text}`}
-              style={{ backgroundColor: "currentColor", opacity: 0.1 }}
+              className={`flex items-center justify-center shrink-0 ${colors.text} ${
+                isColumnBlock ? "h-4 w-4" : "h-5 w-5"
+              }`}
             >
-              <Icon className={`h-3 w-3 ${colors.text}`} />
+              <Icon
+                className={`opacity-90 ${colors.text} ${isColumnBlock ? "h-3 w-3" : "h-3.5 w-3.5"}`}
+              />
             </div>
             <span
-              className={`text-[11px] font-bold uppercase tracking-wider ${colors.text}`}
+              className={`font-bold uppercase tracking-wider ${colors.text} ${
+                isColumnBlock ? "text-[10px]" : "text-[11px]"
+              }`}
             >
               {block.label}
             </span>
           </div>
 
           {/* Config */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className={`flex flex-wrap items-center ${isColumnBlock ? "gap-1" : "gap-1.5"}`}>
             <ConfigInputs block={block} onUpdate={handleUpdateConfig} errors={blockErrors} />
           </div>
         </div>
@@ -171,9 +214,11 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
             e.stopPropagation();
             removeBlock(block.id);
           }}
-          className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+          className={`rounded-full opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 ${
+            isColumnBlock ? "h-5 w-5" : "h-6 w-6"
+          }`}
         >
-          <X className="h-3 w-3" />
+          <X className={isColumnBlock ? "h-2.5 w-2.5" : "h-3 w-3"} />
           <span className="sr-only">Remove block</span>
         </Button>
       </div>
@@ -216,11 +261,15 @@ function ConfigInputs({
   onUpdate: (key: string, value: unknown) => void;
   errors: ValidationError[];
 }) {
+  const isColumnBlock = block.type === "column";
   const baseInputClass =
-    "h-7 text-xs bg-card/80 border-border/60 font-mono rounded-lg focus-visible:ring-1 focus-visible:ring-primary/30 placeholder:text-muted-foreground/50";
+    "bg-card/80 border-border/60 font-mono focus-visible:ring-1 focus-visible:ring-primary/30 placeholder:text-muted-foreground/50";
+  const baseInputSize = isColumnBlock
+    ? "h-6 text-[11px] rounded-md"
+    : "h-7 text-xs rounded-lg";
   const inputClass = (field: string) => {
     const err = getError(errors, field);
-    return `${baseInputClass} ${err ? "border-destructive focus-visible:ring-destructive/50" : ""}`;
+    return `${baseInputClass} ${baseInputSize} ${err ? "border-destructive focus-visible:ring-destructive/50" : ""}`;
   };
   const isEmpty = (val: unknown) => String(val ?? "").trim() === "";
   const Required = () => <span className="text-destructive/80 font-normal" aria-hidden>*</span>;
@@ -261,7 +310,7 @@ function ConfigInputs({
                 value={String(block.config.column || "")}
                 onChange={(e) => onUpdate("column", e.target.value)}
                 placeholder={columnEmpty ? "column или * (обяз.)" : "column или *"}
-                className={`${inputClass("column")} w-28`}
+                className={`${inputClass("column")} ${isColumnBlock ? "w-24 min-w-0" : "w-28"}`}
                 aria-required
                 aria-invalid={!!getError(errors, "column")}
                 aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
@@ -279,7 +328,7 @@ function ConfigInputs({
             value={String(block.config.alias || "")}
             onChange={(e) => onUpdate("alias", e.target.value)}
             placeholder="alias"
-            className={`${baseInputClass} w-24`}
+            className={`${baseInputClass} ${baseInputSize} ${isColumnBlock ? "w-20 min-w-0" : "w-24"}`}
           />
         </>
       );
@@ -459,7 +508,7 @@ function ConfigInputs({
             value={String(block.config.alias || "")}
             onChange={(e) => onUpdate("alias", e.target.value)}
             placeholder="alias"
-            className={`${baseInputClass} w-20`}
+            className={`${baseInputClass} ${baseInputSize} w-20`}
           />
         </>
       );
@@ -591,7 +640,7 @@ function ConfigInputs({
             value={String(block.config.offset ?? "")}
             onChange={(e) => onUpdate("offset", e.target.value === "" ? undefined : Number(e.target.value))}
             placeholder="0"
-            className={`${baseInputClass} w-20`}
+            className={`${baseInputClass} ${baseInputSize} w-20`}
           />
         </>
       );
