@@ -97,7 +97,7 @@ function ContainerDropZone({
   return (
     <div
       ref={setNodeRef}
-      className={`mt-1 mx-3 mb-3 rounded-lg border-2 border-dashed p-2 transition-all duration-200 min-h-[48px] ${
+      className={`mt-1.5 mx-3 mb-3 rounded-lg border-2 border-dashed p-3 transition-all duration-200 min-h-[56px] ${
         isHighlighted
           ? "border-primary/40 bg-primary/[0.04]"
           : "border-border/30 bg-card/30"

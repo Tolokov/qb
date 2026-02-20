@@ -22,14 +22,15 @@ export default function BuilderCanvas() {
   const blocks = useQueryStore((s) => s.blocks);
   const setActiveBlockId = useQueryStore((s) => s.setActiveBlockId);
   const clearBlocks = useQueryStore((s) => s.clearBlocks);
-  const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
+  const { setNodeRef } = useDroppable({ id: "canvas" });
 
   return (
     <div
+      ref={setNodeRef}
       className="flex h-full flex-col bg-canvas"
       onClick={() => setActiveBlockId(null)}
     >
-      <div className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-5 py-3">
+      <div className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-5 py-3 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
             <Layers className="h-3.5 w-3.5 text-primary" />
@@ -70,12 +71,7 @@ export default function BuilderCanvas() {
       </div>
 
       <ScrollArea className="flex-1">
-        <div
-          ref={setNodeRef}
-          className={`min-h-full p-5 transition-all duration-300 canvas-grid ${
-            isOver ? "bg-primary/[0.03]" : ""
-          }`}
-        >
+        <div className="min-h-full p-5 canvas-grid">
           {blocks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-28 text-center">
               <div className="relative mb-5">
@@ -126,13 +122,7 @@ export default function BuilderCanvas() {
 
           {/* Drop hint */}
           {blocks.length > 0 && (
-            <div
-              className={`mt-3 rounded-xl border-2 border-dashed py-3 text-center transition-all duration-300 ${
-                isOver
-                  ? "border-primary/40 bg-primary/[0.04]"
-                  : "border-border/40"
-              }`}
-            >
+            <div className="mt-3 rounded-xl border-2 border-dashed border-border/40 py-3 text-center">
               <p className="text-[11px] text-muted-foreground/60">
                 Drop here to add
               </p>

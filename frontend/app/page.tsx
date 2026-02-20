@@ -7,10 +7,11 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  pointerWithin,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
+  type CollisionDetection,
 } from "@dnd-kit/core";
 import {
   ResizableHandle,
@@ -43,8 +44,24 @@ export default function QueryBuilderPage() {
   }, []);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
+
+  /** Коллизия по позиции указателя: container (зона вложенности) > блок > canvas — для точного срабатывания зон. */
+  const collisionDetection: CollisionDetection = useCallback((args) => {
+    const hits = pointerWithin(args);
+    return [...hits].sort((a, b) => {
+      const aId = String(a.id);
+      const bId = String(b.id);
+      const aIsContainer = aId.startsWith("container-");
+      const bIsContainer = bId.startsWith("container-");
+      if (aIsContainer && !bIsContainer) return -1;
+      if (!aIsContainer && bIsContainer) return 1;
+      if (aId === "canvas" && bId !== "canvas") return 1;
+      if (bId === "canvas" && aId !== "canvas") return -1;
+      return 0;
+    });
+  }, []);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
@@ -144,7 +161,7 @@ export default function QueryBuilderPage() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -152,18 +169,24 @@ export default function QueryBuilderPage() {
       <div className="flex h-screen flex-col bg-background">
         <TopNav />
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
-          <ResizablePanel defaultSize={20} minSize={15} maxSize={28}>
+        <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 bg-background">
+          <ResizablePanel defaultSize={19} minSize={15} maxSize={28}>
             <SidebarLibrary />
           </ResizablePanel>
 
-          <ResizableHandle className="w-px bg-border hover:bg-primary/20 transition-colors" />
+          <ResizableHandle
+            disabled={!!(draggedItem || draggedBlockId)}
+            className="w-1 min-w-1 bg-canvas hover:bg-primary/20 transition-colors shrink-0 disabled:hover:bg-canvas"
+          />
 
           <ResizablePanel defaultSize={48} minSize={30}>
             <BuilderCanvas />
           </ResizablePanel>
 
-          <ResizableHandle className="w-px bg-border hover:bg-primary/20 transition-colors" />
+          <ResizableHandle
+            disabled={!!(draggedItem || draggedBlockId)}
+            className="w-px bg-border hover:bg-primary/20 transition-colors"
+          />
 
           <ResizablePanel defaultSize={32} minSize={22} maxSize={45}>
             <PreviewPanel />
