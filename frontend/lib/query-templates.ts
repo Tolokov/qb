@@ -102,13 +102,13 @@ export const QUERY_TEMPLATES: QueryTemplate[] = [
   {
     id: "medium",
     label: "Medium",
-    description: "Source, column, one subquery (nested query), limit",
+    description: "Source, column, one subquery, limit",
     getBlocks: getMediumBlocks,
   },
   {
     id: "complex",
     label: "Complex",
-    description: "e.g. SELECT id, name FROM users WHERE id >= 10 ORDER BY id DESC LIMIT 10; 3 subqueries, multiple filters and sorts",
+    description: "Complex subqueries, multiple filters and sorts",
     getBlocks: getComplexBlocks,
   },
 ];

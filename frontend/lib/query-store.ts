@@ -206,7 +206,8 @@ export function blocksToSql(blocks: QueryBlock[]): string {
     if (b.type === "source" && b.config.table) {
       fromParts.push(String(b.config.table));
     } else if (b.type === "subquery" && b.children && b.children.length > 0 && b.config.alias) {
-      fromParts.push(`(${blocksToSql(b.children).replace(/;\s*$/, "")}) AS ${b.config.alias}`);
+      const inner = blocksToSql(b.children).replace(/;\s*$/, "").trim();
+      fromParts.push(`(\n${indentSql(inner, 1)}\n\t) AS ${b.config.alias}`);
     }
   }
   if (fromParts.length > 0) parts.push(`FROM ${fromParts.join(", ")}`);
@@ -243,6 +244,15 @@ export function blocksToSql(blocks: QueryBlock[]): string {
   if (json.offset !== undefined) parts.push(`OFFSET ${json.offset}`);
 
   return parts.join("\n") + ";";
+}
+
+/** Добавляет отступ (табы) к каждой строке SQL для вложенных подзапросов. */
+function indentSql(sql: string, tabs: number): string {
+  const tab = "\t".repeat(tabs);
+  return sql
+    .split("\n")
+    .map((line) => tab + line)
+    .join("\n");
 }
 
 function formatCondition(c: Record<string, unknown>): string {
