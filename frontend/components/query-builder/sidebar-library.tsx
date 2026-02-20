@@ -111,9 +111,22 @@ function DraggableItem({ item }: { item: LibraryItem }) {
   );
 }
 
+const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as BlockCategory[];
+
+/** Секции, свернутые по умолчанию при открытии */
+const DEFAULT_COLLAPSED: BlockCategory[] = [
+  "filter",
+  "logical",
+  "aggregation",
+  "grouping",
+  "subquery",
+];
+
 export default function SidebarLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(ALL_CATEGORIES.map((c) => [c, DEFAULT_COLLAPSED.includes(c)]))
+  );
 
   const filteredItems = LIBRARY_ITEMS.filter(
     (item) =>
@@ -121,8 +134,7 @@ export default function SidebarLibrary() {
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const categories = Object.keys(CATEGORY_LABELS) as BlockCategory[];
-  const groupedItems = categories.reduce(
+  const groupedItems = ALL_CATEGORIES.reduce(
     (acc, cat) => {
       const items = filteredItems.filter((item) => item.type === cat);
       if (items.length > 0) acc[cat] = items;
