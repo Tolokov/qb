@@ -5,7 +5,14 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { Layers, MousePointerClick, Sparkles } from "lucide-react";
+import { Layers, MousePointerClick, Sparkles, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import BlockCard from "./block-card";
 import { useQueryStore } from "@/lib/query-store";
@@ -13,6 +20,7 @@ import { useQueryStore } from "@/lib/query-store";
 export default function BuilderCanvas() {
   const blocks = useQueryStore((s) => s.blocks);
   const setActiveBlockId = useQueryStore((s) => s.setActiveBlockId);
+  const clearBlocks = useQueryStore((s) => s.clearBlocks);
   const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
 
   return (
@@ -34,6 +42,30 @@ export default function BuilderCanvas() {
             </span>
           )}
         </div>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (blocks.length > 0) clearBlocks();
+                }}
+                disabled={blocks.length === 0}
+                className="h-8 min-w-[4.5rem] gap-1.5 text-[11px] rounded-md border border-border bg-card/50 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 disabled:opacity-50 disabled:pointer-events-none"
+                aria-label="Очистить рабочее поле"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Очистить
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Удалить все блоки с рабочего поля
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <ScrollArea className="flex-1">

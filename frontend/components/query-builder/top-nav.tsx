@@ -63,17 +63,6 @@ export default function TopNav() {
         </div>
       </div>
 
-      <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        {blocks.length > 0 ? (
-          <>
-            <span className="tabular-nums font-medium">{blocks.length}</span>
-            <span>{blocks.length === 1 ? "block" : "blocks"}</span>
-          </>
-        ) : (
-          <span>No blocks</span>
-        )}
-      </div>
-
       <div className="flex items-center gap-0.5">
         <TooltipProvider delayDuration={300}>
           {/* Theme Switcher */}
