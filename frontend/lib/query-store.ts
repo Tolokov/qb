@@ -282,6 +282,7 @@ export interface QueryBuilderState {
   activeBlockId: string | null;
   history: QueryHistoryEntry[];
   showHistory: boolean;
+  lastAppliedFromTemplate: boolean;
   dragOverContainerId: string | null;
   validationErrors: ValidationError[];
 
@@ -292,6 +293,7 @@ export interface QueryBuilderState {
   moveBlockToContainer: (blockId: string, containerId: string) => void;
   moveBlockToRoot: (blockId: string, index?: number) => void;
   setBlocks: (blocks: QueryBlock[]) => void;
+  setBlocksFromTemplate: (blocks: QueryBlock[]) => void;
   setRootBlocksOrder: (orderedIds: string[]) => void;
   reorderRootBlocks: (activeId: string, overId: string) => void;
   clearBlocks: () => void;
@@ -299,10 +301,12 @@ export interface QueryBuilderState {
   setDragOverContainerId: (id: string | null) => void;
   setValidationErrors: (errors: ValidationError[]) => void;
   setShowHistory: (show: boolean) => void;
+  setLastAppliedFromTemplate: (value: boolean) => void;
   addHistoryEntry: (entry: QueryHistoryEntry) => void;
   removeHistoryEntry: (id: string) => void;
   renameHistoryEntry: (id: string, name: string) => void;
   loadFromHistory: (entry: QueryHistoryEntry) => void;
+  hasHistoryEntryWithSameJson: (canonicalJsonStr: string) => boolean;
   getJsonOutput: () => string;
   getSqlOutput: () => string;
 }
@@ -314,6 +318,7 @@ export const useQueryStore = create<QueryBuilderState>()(
       activeBlockId: null,
       history: [],
       showHistory: false,
+      lastAppliedFromTemplate: false,
       dragOverContainerId: null,
       validationErrors: [],
 
@@ -382,6 +387,8 @@ export const useQueryStore = create<QueryBuilderState>()(
         }),
 
       setBlocks: (blocks) => set({ blocks }),
+      setBlocksFromTemplate: (blocks) =>
+        set({ blocks, activeBlockId: null, lastAppliedFromTemplate: true }),
       setRootBlocksOrder: (orderedIds) =>
         set((state) => ({
           blocks: orderedIds
@@ -420,6 +427,8 @@ export const useQueryStore = create<QueryBuilderState>()(
       setValidationErrors: (errors) => set({ validationErrors: errors }),
 
       setShowHistory: (show) => set({ showHistory: show }),
+      setLastAppliedFromTemplate: (value) =>
+        set({ lastAppliedFromTemplate: value }),
 
       addHistoryEntry: (entry) =>
         set((state) => ({ history: [entry, ...state.history] })),
@@ -438,6 +447,22 @@ export const useQueryStore = create<QueryBuilderState>()(
           showHistory: false,
           activeBlockId: null,
         }),
+
+      hasHistoryEntryWithSameJson: (canonicalJsonStr) => {
+        const state = get();
+        try {
+          const canonical = canonicalJsonStr.trim();
+          return state.history.some((e) => {
+            try {
+              return JSON.stringify(JSON.parse(e.json)) === canonical;
+            } catch {
+              return false;
+            }
+          });
+        } catch {
+          return false;
+        }
+      },
 
       getJsonOutput: () => {
         const { blocks } = get();

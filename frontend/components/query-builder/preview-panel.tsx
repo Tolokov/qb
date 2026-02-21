@@ -30,6 +30,9 @@ export default function PreviewPanel() {
   const addHistoryEntry = useQueryStore((s) => s.addHistoryEntry);
   const historyLength = useQueryStore((s) => s.history.length);
   const setValidationErrors = useQueryStore((s) => s.setValidationErrors);
+  const lastAppliedFromTemplate = useQueryStore((s) => s.lastAppliedFromTemplate);
+  const setLastAppliedFromTemplate = useQueryStore((s) => s.setLastAppliedFromTemplate);
+  const hasHistoryEntryWithSameJson = useQueryStore((s) => s.hasHistoryEntryWithSameJson);
   const { toast } = useToast();
 
   const [copiedJson, setCopiedJson] = useState(false);
@@ -105,18 +108,25 @@ export default function PreviewPanel() {
       setBackendResponse(formatBackendResponse(result));
       setLastResult({ status: "success", time });
 
-      const entry: QueryHistoryEntry = {
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        name: `Query ${historyLength + 1}`,
-        blocks: JSON.parse(JSON.stringify(blocks)),
-        json: jsonOutput,
-        sql: sqlOutput,
-        executionTime: time,
-      };
-      addHistoryEntry(entry);
+      const wasFromTemplate = lastAppliedFromTemplate;
+      setLastAppliedFromTemplate(false);
+      const canonicalJson = JSON.stringify(blocksToJson(blocks));
+      const isDuplicate = hasHistoryEntryWithSameJson(canonicalJson);
+      if (!wasFromTemplate && !isDuplicate) {
+        const entry: QueryHistoryEntry = {
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          name: `Query ${historyLength + 1}`,
+          blocks: JSON.parse(JSON.stringify(blocks)),
+          json: jsonOutput,
+          sql: sqlOutput,
+          executionTime: time,
+        };
+        addHistoryEntry(entry);
+      }
     } catch (err) {
       const time = Date.now() - start;
+      setLastAppliedFromTemplate(false);
       const message =
         err instanceof Error
           ? err.message
@@ -128,7 +138,7 @@ export default function PreviewPanel() {
     } finally {
       setIsRunning(false);
     }
-  }, [blocks, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast]);
+  }, [blocks, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast, lastAppliedFromTemplate, setLastAppliedFromTemplate, hasHistoryEntryWithSameJson]);
 
   return (
     <div className="flex h-full flex-col bg-card">
