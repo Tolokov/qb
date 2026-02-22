@@ -21,6 +21,7 @@ import { useQueryStore, blocksToJson, blocksToSql } from "@/lib/query-store";
 import { groupBlocksIntoRows } from "@/lib/canvas-groups";
 import { QUERY_TEMPLATES } from "@/lib/query-templates";
 import { TRANSLATIONS } from "@/lib/translations";
+import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
 import { generateId } from "@/lib/utils";
 import type { QueryHistoryEntry } from "@/lib/types";
@@ -90,7 +91,7 @@ export default function BuilderCanvas() {
                 aria-label="Выбрать шаблон запроса"
               >
                 <LayoutTemplate className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-                <span className="truncate">{t.templates}</span>
+                <span className={cn("truncate", locale === "braille" && "font-braille")}>{t.templates}</span>
                 <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -128,7 +129,7 @@ export default function BuilderCanvas() {
                 aria-label="История запросов"
               >
                 <Clock className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-                <span className="truncate">{t.history}</span>
+                <span className={cn("truncate", locale === "braille" && "font-braille")}>{t.history}</span>
                 <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -213,7 +214,7 @@ export default function BuilderCanvas() {
             aria-label="Очистить рабочее поле"
           >
             <Trash2 className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-            <span className="truncate">{t.clear}</span>
+            <span className={cn("truncate", locale === "braille" && "font-braille")}>{t.clear}</span>
           </Button>
         </div>
       </div>
@@ -230,10 +231,10 @@ export default function BuilderCanvas() {
                   <Sparkles className="h-3 w-3 text-primary" />
                 </div>
               </div>
-              <h3 className="text-sm font-semibold text-card-foreground mb-1.5">
+              <h3 className={cn("text-sm font-semibold text-card-foreground mb-1.5", locale === "braille" && "font-braille")}>
                 {t.dropComponentsHere}
               </h3>
-              <p className="text-xs text-muted-foreground max-w-[220px] leading-relaxed">
+              <p className={cn("text-xs text-muted-foreground max-w-[220px] leading-relaxed min-w-0", locale === "braille" && "font-braille break-all")}>
                 {t.dragItemsFromSidebar}
               </p>
             </div>
@@ -273,10 +274,10 @@ export default function BuilderCanvas() {
                 className="mt-3 flex-1 min-h-[100px] rounded-xl border-2 border-dashed border-border/50 bg-muted/20 flex flex-col items-center justify-center gap-1.5 py-6"
                 aria-label="Drop zone for new blocks"
               >
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className={cn("text-xs font-medium text-muted-foreground", locale === "braille" && "font-braille")}>
                   {t.dropHereToAddBlock}
                 </p>
-                <p className="text-[11px] text-muted-foreground/70">
+                <p className={cn("text-[11px] text-muted-foreground/70", locale === "braille" && "font-braille")}>
                   {t.dragComponentFromLeftPanel}
                 </p>
               </div>

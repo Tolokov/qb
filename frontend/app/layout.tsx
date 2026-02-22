@@ -36,7 +36,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("querycraft-theme");if(t&&["light","dark","midnight","highcontrast"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","light")}}catch(e){document.documentElement.setAttribute("data-theme","light")}})()`,
+            __html: `(function(){try{var t=localStorage.getItem("querycraft-theme");if(t&&["light","dark","midnight","highcontrast"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","light")}}catch(e){document.documentElement.setAttribute("data-theme","light")}})();(function(){try{var L=localStorage.getItem("querycraft-locale");document.documentElement.setAttribute("data-braille",L==="braille"?"true":"false")}catch(e){document.documentElement.setAttribute("data-braille","false")}})()`,
           }}
         />
       </head>

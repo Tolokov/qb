@@ -25,6 +25,7 @@ const themeIcons: Record<Theme, React.ComponentType<{ className?: string }>> = {
 const localeLabels: Record<Locale, string> = {
   en: "English",
   ru: "Русский",
+  braille: "Braille",
 };
 
 export default function TopNav() {
@@ -76,7 +77,7 @@ export default function TopNav() {
               Language
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {(["en", "ru"] as const).map((l) => (
+            {(["en", "ru", "braille"] as const).map((l) => (
               <DropdownMenuItem
                 key={l}
                 onClick={() => setLocale(l)}
