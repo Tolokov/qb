@@ -4,9 +4,10 @@
  */
 
 import type { QueryBlock } from "./types";
+import { generateId } from "./utils";
 
 function id() {
-  return crypto.randomUUID();
+  return generateId();
 }
 
 function block(

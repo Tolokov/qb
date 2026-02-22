@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { Braces, Sun, Moon, Monitor, Eye } from "lucide-react";
+import { Braces, Sun, Moon, Monitor, Eye, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme, type Theme } from "@/hooks/use-theme";
+import { useLocale, type Locale } from "@/hooks/use-locale";
 
 const themeIcons: Record<Theme, React.ComponentType<{ className?: string }>> = {
   light: Sun,
@@ -21,8 +22,14 @@ const themeIcons: Record<Theme, React.ComponentType<{ className?: string }>> = {
   highcontrast: Eye,
 };
 
+const localeLabels: Record<Locale, string> = {
+  en: "English",
+  ru: "Русский",
+};
+
 export default function TopNav() {
   const { theme, setTheme, themes } = useTheme();
+  const { locale, setLocale } = useLocale();
 
   const ActiveIcon = themeIcons[theme];
 
@@ -59,9 +66,40 @@ export default function TopNav() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-card-foreground hover:bg-secondary/80"
+              aria-label="Language"
+            >
+              <Languages className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={6} className="w-40 rounded-xl shadow-xl">
+            <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Language
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {(["en", "ru"] as const).map((l) => (
+              <DropdownMenuItem
+                key={l}
+                onClick={() => setLocale(l)}
+                className={`rounded-lg py-2 cursor-pointer ${locale === l ? "bg-accent text-accent-foreground" : ""}`}
+              >
+                <span className="text-[12px] font-medium">{localeLabels[l]}</span>
+                {locale === l && (
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-card-foreground hover:bg-secondary/80"
+              aria-label="Switch theme"
             >
               <ActiveIcon className="h-4 w-4" />
-              <span className="sr-only">Switch theme</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

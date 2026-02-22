@@ -21,11 +21,16 @@ import {
   compileQueryOnBackend,
   formatBackendResponse,
 } from "@/lib/api";
+import { generateId } from "@/lib/utils";
 import type { QueryHistoryEntry } from "@/lib/types";
+import { TRANSLATIONS } from "@/lib/translations";
+import { useLocale } from "@/hooks/use-locale";
 import { validateBlocks } from "@/lib/validation";
 import { useToast } from "@/hooks/use-toast";
 
 export default function PreviewPanel() {
+  const { locale } = useLocale();
+  const t = TRANSLATIONS[locale];
   const blocks = useQueryStore((s) => s.blocks);
   const addHistoryEntry = useQueryStore((s) => s.addHistoryEntry);
   const historyLength = useQueryStore((s) => s.history.length);
@@ -79,14 +84,17 @@ export default function PreviewPanel() {
   const runQuery = useCallback(async () => {
     if (blocks.length === 0) return;
 
-    const validation = validateBlocks(blocks);
+    const validation = validateBlocks(blocks, locale);
     if (!validation.valid) {
       setValidationErrors(validation.errors);
       const messages = validation.errors.map((e) => e.message);
       const unique = [...new Set(messages)];
       toast({
-        title: "Заполните обязательные поля",
-        description: unique.length <= 3 ? unique.join(" ") : `${unique.slice(0, 2).join(" ")} и ещё ${unique.length - 2} полей.`,
+        title: t.validationToastTitle,
+        description:
+          unique.length <= 3
+            ? unique.join(" ")
+            : `${unique.slice(0, 2).join(" ")} ${t.validationToastAndMore(unique.length - 2)}.`,
         variant: "destructive",
       });
       return;
@@ -114,7 +122,7 @@ export default function PreviewPanel() {
       const isDuplicate = hasHistoryEntryWithSameJson(canonicalJson);
       if (!wasFromTemplate && !isDuplicate) {
         const entry: QueryHistoryEntry = {
-          id: crypto.randomUUID(),
+          id: generateId(),
           timestamp: Date.now(),
           name: `Query ${historyLength + 1}`,
           blocks: JSON.parse(JSON.stringify(blocks)),
@@ -138,7 +146,7 @@ export default function PreviewPanel() {
     } finally {
       setIsRunning(false);
     }
-  }, [blocks, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast, lastAppliedFromTemplate, setLastAppliedFromTemplate, hasHistoryEntryWithSameJson]);
+  }, [blocks, locale, t, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast, lastAppliedFromTemplate, setLastAppliedFromTemplate, hasHistoryEntryWithSameJson]);
 
   return (
     <div className="flex h-full flex-col bg-card">

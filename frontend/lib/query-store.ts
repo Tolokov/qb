@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import type { QueryBlock, QueryHistoryEntry, LibraryItem } from "./types";
 import type { ValidationError } from "./validation";
 import { getVisualBlockOrder } from "./canvas-groups";
+import { generateId } from "./utils";
 
 function updateBlockInTree(
   blocks: QueryBlock[],
@@ -324,7 +325,7 @@ export const useQueryStore = create<QueryBuilderState>()(
 
       addBlock: (item, parentId) => {
         const newBlock: QueryBlock = {
-          id: crypto.randomUUID(),
+          id: generateId(),
           type: item.type,
           label: item.label,
           icon: item.icon,

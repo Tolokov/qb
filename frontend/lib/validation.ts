@@ -1,3 +1,5 @@
+import type { Locale } from "./translations";
+import { TRANSLATIONS } from "./translations";
 import type { QueryBlock } from "./types";
 
 export interface ValidationError {
@@ -17,18 +19,22 @@ function collectBlocks(blocks: QueryBlock[]): QueryBlock[] {
   return out;
 }
 
+const DEFAULT_LOCALE: Locale = "en";
+
 /**
  * Проверяет, что все обязательные поля блоков заполнены.
+ * Сообщения возвращаются на выбранном языке (locale).
  */
-export function validateBlocks(blocks: QueryBlock[]): {
-  valid: boolean;
-  errors: ValidationError[];
-} {
+export function validateBlocks(
+  blocks: QueryBlock[],
+  locale: Locale = DEFAULT_LOCALE
+): { valid: boolean; errors: ValidationError[] } {
+  const t = TRANSLATIONS[locale].validation;
   const errors: ValidationError[] = [];
   const all = collectBlocks(blocks);
 
   if (all.length === 0) {
-    return { valid: false, errors: [{ blockId: "", field: "", message: "Добавьте хотя бы один блок на канвас." }] };
+    return { valid: false, errors: [{ blockId: "", field: "", message: t.addBlockToCanvas }] };
   }
 
   const sources = all.filter((b) => b.type === "source");
@@ -36,13 +42,13 @@ export function validateBlocks(blocks: QueryBlock[]): {
   if (!hasValidSource) {
     if (sources.length > 0) {
       sources.forEach((s) => {
-        errors.push({ blockId: s.id, field: "table", message: "Укажите имя таблицы (источник данных)." });
+        errors.push({ blockId: s.id, field: "table", message: t.specifyTable });
       });
     } else {
       errors.push({
         blockId: all[0].id,
         field: "",
-        message: "Добавьте блок источника данных (Data Source) и укажите таблицу.",
+        message: t.addDataSource,
       });
     }
   }
@@ -52,21 +58,21 @@ export function validateBlocks(blocks: QueryBlock[]): {
       case "source": {
         const table = String(block.config.table ?? "").trim();
         if (!table) {
-          errors.push({ blockId: block.id, field: "table", message: "Таблица обязательна." });
+          errors.push({ blockId: block.id, field: "table", message: t.tableRequired });
         }
         break;
       }
       case "column": {
         const column = String(block.config.column ?? "").trim();
         if (column === "") {
-          errors.push({ blockId: block.id, field: "column", message: "Укажите колонку или *." });
+          errors.push({ blockId: block.id, field: "column", message: t.specifyColumnOrStar });
         }
         break;
       }
       case "filter": {
         const column = String(block.config.column ?? "").trim();
         if (!column) {
-          errors.push({ blockId: block.id, field: "column", message: "Укажите колонку для условия." });
+          errors.push({ blockId: block.id, field: "column", message: t.specifyColumnForCondition });
         }
         const op = block.config.operator;
         if (op !== "IS NULL" && op !== "IS NOT NULL") {
@@ -77,13 +83,13 @@ export function validateBlocks(blocks: QueryBlock[]): {
               errors.push({
                 blockId: block.id,
                 field: low ? "valueHigh" : "valueLow",
-                message: "Для BETWEEN укажите оба значения (от и до).",
+                message: t.betweenBothValues,
               });
             }
           } else {
             const value = block.config.value;
             if (value === undefined || value === null || String(value).trim() === "") {
-              errors.push({ blockId: block.id, field: "value", message: "Укажите значение для сравнения." });
+              errors.push({ blockId: block.id, field: "value", message: t.specifyValueForCompare });
             }
           }
         }
@@ -93,7 +99,7 @@ export function validateBlocks(blocks: QueryBlock[]): {
         const fn = block.config.function;
         const column = String(block.config.column ?? "").trim();
         if (fn !== "COUNT" && column === "") {
-          errors.push({ blockId: block.id, field: "column", message: "Укажите колонку для агрегации." });
+          errors.push({ blockId: block.id, field: "column", message: t.specifyColumnForAggregation });
         }
         break;
       }
@@ -101,19 +107,19 @@ export function validateBlocks(blocks: QueryBlock[]): {
         if (block.label === "GROUP BY") {
           const column = String(block.config.column ?? "").trim();
           if (!column) {
-            errors.push({ blockId: block.id, field: "column", message: "Укажите колонку для GROUP BY." });
+            errors.push({ blockId: block.id, field: "column", message: t.specifyColumnForGroupBy });
           }
         } else if (block.label === "HAVING") {
           const condition = String(block.config.condition ?? "").trim();
           if (!condition) {
-            errors.push({ blockId: block.id, field: "condition", message: "Укажите условие HAVING." });
+            errors.push({ blockId: block.id, field: "condition", message: t.specifyHavingCondition });
           }
         }
         break;
       case "ordering": {
         const column = String(block.config.column ?? "").trim();
         if (!column) {
-          errors.push({ blockId: block.id, field: "column", message: "Укажите колонку для сортировки." });
+          errors.push({ blockId: block.id, field: "column", message: t.specifyColumnForOrder });
         }
         break;
       }
@@ -121,24 +127,24 @@ export function validateBlocks(blocks: QueryBlock[]): {
         const limit = block.config.limit;
         const num = typeof limit === "number" ? limit : Number(limit);
         if (Number.isNaN(num) || num < 1) {
-          errors.push({ blockId: block.id, field: "limit", message: "Укажите число строк (целое, от 1)." });
+          errors.push({ blockId: block.id, field: "limit", message: t.specifyLimit });
         }
         break;
       }
       case "subquery": {
         const alias = String(block.config.alias ?? "").trim();
         if (!alias) {
-          errors.push({ blockId: block.id, field: "alias", message: "Укажите алиас подзапроса." });
+          errors.push({ blockId: block.id, field: "alias", message: t.specifySubqueryAlias });
         }
         if (block.children?.length) {
-          const childResult = validateBlocks(block.children);
+          const childResult = validateBlocks(block.children, locale);
           errors.push(...childResult.errors);
         }
         break;
       }
       case "logical":
         if (block.children?.length) {
-          const childResult = validateBlocks(block.children);
+          const childResult = validateBlocks(block.children, locale);
           errors.push(...childResult.errors);
         }
         break;

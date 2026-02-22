@@ -20,12 +20,17 @@ import BlockCard from "./block-card";
 import { useQueryStore, blocksToJson, blocksToSql } from "@/lib/query-store";
 import { groupBlocksIntoRows } from "@/lib/canvas-groups";
 import { QUERY_TEMPLATES } from "@/lib/query-templates";
+import { TRANSLATIONS } from "@/lib/translations";
+import { useLocale } from "@/hooks/use-locale";
+import { generateId } from "@/lib/utils";
 import type { QueryHistoryEntry } from "@/lib/types";
 
 const btnClass =
   "h-7 min-w-0 gap-1 text-[10px] rounded-md border border-border bg-card/50 text-muted-foreground hover:text-card-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:pointer-events-none sm:h-8 sm:min-w-[4rem] sm:gap-1.5 sm:text-[11px] shrink-0";
 
 export default function BuilderCanvas() {
+  const { locale } = useLocale();
+  const t = TRANSLATIONS[locale];
   const blocks = useQueryStore((s) => s.blocks);
   const setActiveBlockId = useQueryStore((s) => s.setActiveBlockId);
   const clearBlocks = useQueryStore((s) => s.clearBlocks);
@@ -40,7 +45,7 @@ export default function BuilderCanvas() {
   const saveCurrentAsDraftThenLoad = (entry: QueryHistoryEntry) => {
     if (blocks.length > 0) {
       const draft: QueryHistoryEntry = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         name: `Черновик ${new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" })}`,
         blocks: JSON.parse(JSON.stringify(blocks)),
@@ -85,7 +90,7 @@ export default function BuilderCanvas() {
                 aria-label="Выбрать шаблон запроса"
               >
                 <LayoutTemplate className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-                <span className="truncate">Шаблоны</span>
+                <span className="truncate">{t.templates}</span>
                 <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -123,7 +128,7 @@ export default function BuilderCanvas() {
                 aria-label="История запросов"
               >
                 <Clock className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-                <span className="truncate">История</span>
+                <span className="truncate">{t.history}</span>
                 <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -208,7 +213,7 @@ export default function BuilderCanvas() {
             aria-label="Очистить рабочее поле"
           >
             <Trash2 className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-            <span className="truncate">Очистить</span>
+            <span className="truncate">{t.clear}</span>
           </Button>
         </div>
       </div>
@@ -226,10 +231,10 @@ export default function BuilderCanvas() {
                 </div>
               </div>
               <h3 className="text-sm font-semibold text-card-foreground mb-1.5">
-                Drop components here
+                {t.dropComponentsHere}
               </h3>
               <p className="text-xs text-muted-foreground max-w-[220px] leading-relaxed">
-                Drag items from the sidebar to start building your SQL query visually
+                {t.dragItemsFromSidebar}
               </p>
             </div>
           ) : (
@@ -269,10 +274,10 @@ export default function BuilderCanvas() {
                 aria-label="Drop zone for new blocks"
               >
                 <p className="text-xs font-medium text-muted-foreground">
-                  Drop here to add a block
+                  {t.dropHereToAddBlock}
                 </p>
                 <p className="text-[11px] text-muted-foreground/70">
-                  Drag a component from the left panel
+                  {t.dragComponentFromLeftPanel}
                 </p>
               </div>
             </>
