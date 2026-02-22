@@ -1,8 +1,7 @@
 import pytest
 
-from tests.cases import ECHO_PARAMETRIZE_ARGS, ECHO_CASES
+from tests.cases import ECHO_CASES, ECHO_PARAMETRIZE_ARGS
 from tests.data import payload_simple
-
 
 COMPILE_URL = "/api/v1/query/compile"
 
