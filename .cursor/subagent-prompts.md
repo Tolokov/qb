@@ -12,7 +12,7 @@ Ready-to-use prompts for subagent tasks (mcp_task). Role and subagent type are l
 
 ## Stage 0.1. Ensure the frontend sends requests to the backend
 
-**Subagent type:** `explore` (verification) or `generalPurpose` (if code changes needed).  
+**Subagent type:** `explore` (verification) or `generalPurpose` (if code changes needed).
 **Rule:** Frontend developer.
 
 **Goal (for auto-delegation):** Ensure the frontend actually sends requests to the backend and the chain works.
@@ -40,7 +40,7 @@ Do not change the API contract (request body, expected response). Do not add new
 
 ## Stage 0.2. Ensure the backend understands Spark and can emit simple queries
 
-**Subagent type:** `generalPurpose`.  
+**Subagent type:** `generalPurpose`.
 **Rule:** Backend developer.
 
 **Goal (for auto-delegation):** Ensure the backend can form simple Spark SQL or PySpark snippets; do not implement full JSON compilation yet.
@@ -68,7 +68,7 @@ Constraints: No eval, no shell=True, no unsafe SQL concatenation. Use templates 
 
 ## Next stage. Backend: JSON → Spark-compatible SQL compilation
 
-**Subagent type:** `generalPurpose`.  
+**Subagent type:** `generalPurpose`.
 **Rule:** Backend developer. Run after stages 0.1 and 0.2.
 
 **Goal (for auto-delegation):** Implement full compilation of frontend payload JSON to Spark-compatible SQL on the backend.
@@ -94,7 +94,7 @@ Tasks:
 
 ## 2. Frontend: Show compiled SQL from API in preview
 
-**Subagent type:** `generalPurpose`.  
+**Subagent type:** `generalPurpose`.
 **Rule:** Frontend developer.
 
 **Goal (for auto-delegation):** Once the backend returns sql in QueryResponse, show that compiled SQL in the preview (with fallback and error display).
@@ -123,7 +123,7 @@ Do not change the request contract to the API. Follow existing patterns (Zustand
 
 ## 3. Backend: Clear compilation error messages
 
-**Subagent type:** `generalPurpose`.  
+**Subagent type:** `generalPurpose`.
 **Rule:** Backend developer.
 
 **Goal (for auto-delegation):** Return clear error messages with block or field reference when compilation fails.
@@ -147,7 +147,7 @@ Handle errors explicitly (do not swallow exceptions); preserve types. Do not add
 
 ## 4. Frontend: Save query to library
 
-**Subagent type:** `generalPurpose`.  
+**Subagent type:** `generalPurpose`.
 **Rule:** Frontend developer.
 
 **Goal (for auto-delegation):** Let the user save the current query to a library (saved/favorites) for reuse, separate from run history.
@@ -175,7 +175,7 @@ Minimal changes; avoid new dependencies. Follow query-store, history-panel, side
 
 ## 5. PySpark export (backend + frontend)
 
-**Subagent type:** First `generalPurpose` for backend, then for frontend.  
+**Subagent type:** First `generalPurpose` for backend, then for frontend.
 **Rule:** Backend developer, then Frontend developer.
 
 **Goal (backend):** Add PySpark code to compile response (or a dedicated endpoint) so the user can export for pipeline/script.
@@ -206,7 +206,7 @@ Tasks: "Export PySpark" button or tab in preview; on click — call API if separ
 
 ## 6. Explore: API and contract audit
 
-**Subagent type:** `explore`.  
+**Subagent type:** `explore`.
 **Thoroughness:** medium.
 
 **Goal (for auto-delegation):** Quick audit of frontend–backend contracts and places that need changes for sql/pyspark.

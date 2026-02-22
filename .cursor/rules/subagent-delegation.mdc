@@ -1,11 +1,23 @@
 ---
-description: Subagent delegation — route tasks and auto-generate prompts; do not enable for normal coding
+description: Subagent delegation — route tasks and auto-generate prompts; when to launch subagents (always for matching tasks)
 alwaysApply: false
 ---
 
 # Subagent delegation (routing and auto-task generation)
 
 **When to enable:** Enable this rule when **delegating work to a subagent** (e.g. via mcp_task). You do **not** need to specify the exact task for each subagent; routing and task theme are derived from the user’s request and the role’s scope.
+
+## When to launch subagents (automation)
+
+**Default behaviour:** For automation and consistent behaviour, **always consider launching subagents** whenever the user's request matches any row in the routing table below. The system should treat subagent delegation as the default for:
+
+- Any task that touches **product vision, requirements, user stories, evaluation, roadmap** → delegate to a **Product Owner**–style subagent (generalPurpose).
+- Any task that touches **backend**, API, compile, SQL, Spark, services, models, config, tests → delegate to a **Backend** subagent (generalPurpose).
+- Any task that touches **frontend**, UI, query editor, preview, history, components, API client, state, themes → delegate to a **Frontend** subagent (generalPurpose).
+- Any task that is **exploration only** (find where X, audit contracts, explore codebase) → use **explore** subagent.
+- Any task that is **shell/commands** (run make, git, scripts) → use **shell** subagent.
+
+**Rule of thumb:** If the user request fits one or more of the intents in the table below, launch the corresponding subagent(s) rather than executing the work in the main agent. When in doubt, delegate (e.g. one subagent per area touched). This ensures the system **always** uses subagents for matching tasks and keeps role boundaries clear.
 
 ## How to route
 
