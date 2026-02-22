@@ -1,5 +1,7 @@
 # SQL → PySpark Conversion Examples
 
+Справочник по переводу SQL в PySpark для бекенда QB. Обзор проекта и запуск — см. [README.md](../../../README.md) в корне репозитория.
+
 ## Example 1
 
 **SQL**

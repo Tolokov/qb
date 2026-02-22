@@ -1,7 +1,12 @@
-const API_BASE =
-  typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "")
-    : "";
+/** В браузере используем относительный путь: Next.js проксирует /api/v1/* на бекенд (нет CORS). */
+function getApiBase(): string {
+  if (typeof window === "undefined") return "";
+  const env = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof env === "string" && env.trim() !== "") return env.replace(/\/$/, "");
+  return "";
+}
+
+const API_BASE = getApiBase();
 
 export interface BackendColumn {
   name: string;

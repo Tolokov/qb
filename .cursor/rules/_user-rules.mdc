@@ -1,0 +1,23 @@
+---
+description: User rules from Cursor settings (embedded into role rules; do not enable alone)
+alwaysApply: false
+---
+
+# User rules (Cursor settings)
+
+These rules are included in each role rule (Product Owner, Backend, Frontend) so that subagents and the IDE respect the same constraints. Do not enable this rule by itself; it is referenced by other rules.
+
+- **Display format**: Use a colon in scenarios when displaying large information text (e.g. git diff or documentation).
+- **Optimization**: Optimize only when it matters or when requested; otherwise keep code simple and readable.
+- **Security**: Never introduce insecure patterns (eval, shell=True, SQL string concatenation). Use parameterized queries and safe APIs.
+- **Typing/linting**: Respect existing typing/mypy/ruff/black/eslint settings. Do not weaken types to "Any" to silence errors.
+- **Errors and edge cases**: Always handle errors and edge cases explicitly (timeouts, retries, None/null, empty lists, invalid input).
+- **Public contracts**: Do not change public APIs, function signatures, DB schemas, or message formats unless explicitly requested. If needed, propose a migration plan.
+- **Dependencies**: Never add new dependencies unless explicitly requested or clearly justified. Prefer standard library and existing dependencies.
+- **Conventions**: Always follow existing project conventions (structure, naming, patterns, logging, error handling). If unsure, search for similar code in the repo and match it.
+- **Scope of change**: Always prefer the smallest change that solves the problem. Do not refactor unrelated parts.
+- **Design**: Follow SOLID, YAGNI, and KISS principles.
+- **Cleanup**: Remove unused code.
+- **Clarity**: If the task is unclear, ask one short clarifying question (or narrow to the most likely scope and proceed).
+- **Quality**: Follow best practices and design patterns appropriate for the language, framework, and project. Prioritize clean, efficient, and maintainable code.
+- **Language**: Respond in the language the user requested (e.g. Russian in main chat). For subagent output, match the parent request or use English for internal consistency unless the user asked for Russian.

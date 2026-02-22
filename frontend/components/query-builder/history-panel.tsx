@@ -21,9 +21,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useQueryStore } from "@/lib/query-store";
+import { TRANSLATIONS } from "@/lib/translations";
+import { useLocale } from "@/hooks/use-locale";
+import { cn } from "@/lib/utils";
 import type { QueryHistoryEntry } from "@/lib/types";
 
 export default function HistoryPanel() {
+  const { locale } = useLocale();
+  const t = TRANSLATIONS[locale];
   const showHistory = useQueryStore((s) => s.showHistory);
   const setShowHistory = useQueryStore((s) => s.setShowHistory);
   const history = useQueryStore((s) => s.history);
@@ -35,15 +40,14 @@ export default function HistoryPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleString("en-US", {
+  const dateLocale = locale === "ru" ? "ru" : "en-US";
+  const formatTime = (ts: number) =>
+    new Date(ts).toLocaleString(dateLocale, {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   const startRename = (entry: QueryHistoryEntry) => {
     setEditingId(entry.id);
@@ -58,13 +62,13 @@ export default function HistoryPanel() {
 
   return (
     <Dialog open={showHistory} onOpenChange={setShowHistory}>
-      <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0 rounded-2xl border-border bg-card overflow-hidden shadow-2xl">
+      <DialogContent className={cn("max-w-2xl max-h-[80vh] p-0 gap-0 rounded-2xl border-border bg-card overflow-hidden shadow-2xl", locale === "braille" && "font-braille")}>
         <DialogHeader className="px-5 py-4 border-b border-border bg-card/80 backdrop-blur-sm">
           <DialogTitle className="flex items-center gap-2.5 text-[13px] font-semibold">
             <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
               <Clock className="h-3 w-3 text-primary" />
             </div>
-            Query History
+            {t.queryHistory}
             {history.length > 0 && (
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                 {history.length}
@@ -80,10 +84,10 @@ export default function HistoryPanel() {
                 <FileCode className="h-8 w-8 text-muted-foreground/25" />
               </div>
               <p className="text-sm font-medium text-muted-foreground/70">
-                No queries in history yet
+                {t.historyEmptyTitle}
               </p>
               <p className="text-[11px] text-muted-foreground/40 mt-1">
-                Run a query to see it appear here
+                {t.historyEmptyHint}
               </p>
             </div>
           ) : (
@@ -155,7 +159,7 @@ export default function HistoryPanel() {
                             </span>
                           )}
                           <span className="tabular-nums">
-                            {entry.blocks.length} blocks
+                            {t.historyBlocksCount(entry.blocks.length)}
                           </span>
                         </div>
                       </div>

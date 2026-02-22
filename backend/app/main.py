@@ -21,6 +21,15 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(query_router, prefix=SETTINGS.api_v1_prefix, tags=["Query"])
+
+    @app.get(
+        "/.well-known/appspecific/com.chrome.devtools.json",
+        include_in_schema=False,
+    )
+    def _chrome_devtools_well_known() -> dict:
+        """Тихий ответ для Chrome DevTools — убирает 404 из логов."""
+        return {}
+
     return app
 
 

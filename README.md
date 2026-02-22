@@ -1,15 +1,58 @@
-# SQL Query Builder
+# SQL Query Builder (QB)
 
-Конвертер SQL запросов в spark
+Конвертер SQL-запросов в Spark: веб-интерфейс для визуальной сборки запроса и бекенд для компиляции в Hadoop-совместимый SQL.
+
+## Содержание
+
+- [Структура проекта](#структура-проекта)
+- [Сборка и запуск (Makefile)](#сборка-и-запуск-makefile)
+- [Запуск вручную](#запуск-вручную)
+- [Документация](#документация)
+- [Pre-commit](#pre-commit)
+
+---
 
 ## Структура проекта
 
-- **frontend** — веб-интерфейс на Next.js: drag-and-drop редактор запросов, превью и история.
-- **backend** — сервис на FastAPI: принимает JSON-описание запроса и компилирует его в Hadoop-совместимый SQL.
+| Часть      | Описание |
+|-----------|----------|
+| **frontend** | Веб-интерфейс на Next.js: drag-and-drop редактор запросов, превью (JSON/SQL), история, библиотека блоков. |
+| **backend**  | Сервис на FastAPI: принимает JSON-описание запроса, компилирует в Hadoop-совместимый SQL (см. [backend/app/README.md](backend/app/README.md)). |
 
-## Запуск
+---
 
-**Фронтенд** (режим разработки):
+## Сборка и запуск (Makefile)
+
+Из корня репозитория все команды запуска и установки выполняются через Makefile.
+
+### Цели Makefile
+
+Полный список целей — в [Makefile](Makefile). Кратко по командам:
+
+| Команда | Описание |
+|--------|----------|
+| `make help` | Справка по целям Makefile. |
+| `make setup` | Установка зависимостей (frontend + backend). |
+| `make setup-frontend` | `pnpm install` в `frontend/`. |
+| `make setup-backend` | Создание venv и `pip install -r requirements.txt` в `backend/`. |
+| `make frontend` | Запуск фронтенда (Next.js, порт 3000). |
+| `make backend` | Запуск бекенда (порт 8000); при первом запуске сам выполнит `setup-backend`. |
+| `make run` | Одновременный запуск фронтенда и бекенда; остановка — Ctrl+C. |
+
+После `make run`:
+
+- Фронтенд: [http://localhost:3000](http://localhost:3000)
+- API: [http://localhost:8000](http://localhost:8000)
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+---
+
+## Запуск вручную
+
+Если не используете Makefile:
+
+**Фронтенд:**
 
 ```bash
 cd frontend
@@ -17,25 +60,38 @@ pnpm install
 pnpm dev
 ```
 
-Приложение откроется по адресу [http://localhost:3000](http://localhost:3000).
+Приложение: [http://localhost:3000](http://localhost:3000).
 
-**Бекенд** (API + Swagger):
+**Бекенд:**
 
 ```bash
 cd backend
-python -m venv venv
-c или source venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
 - API: [http://localhost:8000](http://localhost:8000)
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
 - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-**Pre-commit** (опционально, не обязателен для коммита):
+---
 
-Проверки перед коммитом для бекенда не включены по умолчанию. При желании можно запускать вручную:
+## Документация
+
+| Документ | Описание |
+|----------|----------|
+| [AGENTS.md](AGENTS.md) | Роли агентов в проекте (Product Owner, Backend, Frontend) и когда какую правило подключать. |
+| [CHANGELOG.md](CHANGELOG.md) | История изменений по версиям: что добавлено, изменено и исправлено. |
+| [backend/app/README.md](backend/app/README.md) | Примеры перевода SQL в PySpark (справочник по конвертации). |
+| [Makefile](Makefile) | Цели для сборки и запуска (см. также [раздел выше](#сборка-и-запуск-makefile)). |
+
+---
+
+## Pre-commit
+
+Проверки перед коммитом для бекенда не включены по умолчанию. Запуск вручную:
 
 ```bash
 cd backend
@@ -43,10 +99,10 @@ pip install -r requirements-dev.txt
 pre-commit run --config backend/.pre-commit-config.yaml --all-files
 ```
 
-Чтобы отключить автоматический запуск перед коммитом (если хуки уже ставились):
+Отключение хуков (если ставились):
 
 ```bash
-# из корня репо; если pre-commit ставился через venv бекенда:
-backend\venv\Scripts\pre-commit.exe uninstall
-# или после activate: pre-commit uninstall
+# из корня репо (если pre-commit ставился через venv бекенда):
+pre-commit uninstall
+# или после activate в backend: pre-commit uninstall
 ```

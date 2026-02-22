@@ -45,10 +45,12 @@ export default function BuilderCanvas() {
 
   const saveCurrentAsDraftThenLoad = (entry: QueryHistoryEntry) => {
     if (blocks.length > 0) {
+      const now = new Date();
+      const timeHHmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const draft: QueryHistoryEntry = {
         id: generateId(),
         timestamp: Date.now(),
-        name: `Черновик ${new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" })}`,
+        name: t.draftTitle(timeHHmm),
         blocks: JSON.parse(JSON.stringify(blocks)),
         json: JSON.stringify(blocksToJson(blocks), null, 2),
         sql: blocksToSql(blocks),
@@ -58,6 +60,15 @@ export default function BuilderCanvas() {
     }
     loadFromHistory(entry);
   };
+
+  const dateLocale = locale === "ru" ? "ru" : "en-US";
+  const formatEntryTimestamp = (ts: number) =>
+    new Date(ts).toLocaleString(dateLocale, {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   return (
     <div
@@ -157,17 +168,12 @@ export default function BuilderCanvas() {
                           className="group flex items-center gap-2 rounded-lg py-2 px-2 hover:bg-secondary/60 cursor-pointer"
                           onClick={() => saveCurrentAsDraftThenLoad(entry)}
                         >
-                          <div className="flex-1 min-w-0">
+                          <div className={cn("flex-1 min-w-0", locale === "braille" && "font-braille")}>
                             <span className="text-[12px] font-medium text-card-foreground truncate block">
                               {entry.name}
                             </span>
                             <span className="text-[10px] text-muted-foreground">
-                              {new Date(entry.timestamp).toLocaleString("ru", {
-                                day: "numeric",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                              {formatEntryTimestamp(entry.timestamp)}
                               {entry.executionTime != null && ` · ${entry.executionTime}ms`}
                             </span>
                           </div>
@@ -176,7 +182,7 @@ export default function BuilderCanvas() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
-                            aria-label="Удалить из истории"
+                            aria-label={t.removeFromHistory}
                             onClick={(e) => {
                               e.stopPropagation();
                               removeHistoryEntry(entry.id);

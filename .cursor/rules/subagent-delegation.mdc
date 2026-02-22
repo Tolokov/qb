@@ -1,0 +1,46 @@
+---
+description: Subagent delegation — route tasks and auto-generate prompts; do not enable for normal coding
+alwaysApply: false
+---
+
+# Subagent delegation (routing and auto-task generation)
+
+**When to enable:** Enable this rule when **delegating work to a subagent** (e.g. via mcp_task). You do **not** need to specify the exact task for each subagent; routing and task theme are derived from the user’s request and the role’s scope.
+
+## How to route
+
+| User intent / topic | Subagent type | Task theme (auto-generated from request) |
+|---------------------|---------------|------------------------------------------|
+| Vision, requirements, user stories, acceptance criteria, “what should it do”, evaluation, roadmap, satisfaction | **generalPurpose** (or explore for audit) | Product Owner: refine the request into one of vision/requirements/user stories/feature definition/review; produce a short report or list. |
+| Backend: API, compile, SQL, Spark, services, models, repositories, config, tests | **generalPurpose** | Backend developer: infer one of API/compilation/services/models/config/tests; implement or propose steps. |
+| Frontend: UI, query editor, preview, history, components, API client, state, themes | **generalPurpose** | Frontend developer: infer one of query editor/API integration/UI/state/components; implement or propose steps. |
+| “Explore codebase”, “find where X”, “audit contracts” | **explore** | Any: quick exploration; report findings. Prefer **explore** for read-only search. |
+| Shell: run commands, git, make | **shell** | Execute the given commands. |
+| Refactor / “improve X” / “fix X” | **generalPurpose** | Choose the role that **owns** the code (backend/** or frontend/**); prompt = “Refactor/improve/fix: [goal]. Scope: [Backend|Frontend] only.” |
+
+**Ambiguous or cross-layer requests:** If the user asks for both backend and frontend (e.g. “add a button that calls compile and shows the result”), delegate **twice**: one goal for Backend (e.g. “Ensure compile returns sql”), one for Frontend (e.g. “Show compile response in preview when Run is clicked”). Prefer one goal per delegation. If the request does not clearly match one role, use **generalPurpose** and in the prompt state: “Act as [Backend|Frontend|Product Owner] for QB. Goal: …” so the subagent can self-identify.
+
+## Auto-generating the task prompt
+
+1. **Do not** ask the user to specify the exact task for each subagent.
+2. **Infer** from the user message:
+   - If the message is about product/value/requirements → delegate to a **Product Owner**–style prompt (see below).
+   - If the message touches `backend/`, API, compile, SQL, Spark, services → delegate to **Backend** with a prompt that states the goal (e.g. “Ensure backend can return a simple Spark SQL string for a given payload”).
+   - If the message touches `frontend/`, UI, components, preview, history → delegate to **Frontend** with a prompt that states the goal (e.g. “Ensure the preview panel shows the backend response when Run is clicked”).
+3. **Build the prompt** in one sentence or short paragraph: state the **goal** (what outcome) and **context** (e.g. “Project QB; current state: …”). The role rule already scopes the agent (task scope / auto-assigned topics); your prompt only needs to narrow the goal.
+4. **Optional**: If the user’s request spans two areas (e.g. “add compile endpoint and show result in UI”), delegate **twice** (backend then frontend) with one prompt each, or one delegation with a two-part prompt; prefer one goal per delegation when possible.
+
+## Example prompts (minimal; theme is auto from role)
+
+- Product Owner: “Evaluate project QB: current stage, next step, and your satisfaction level. Respond with a short structured report.”
+- Backend: “In project QB, ensure POST /api/v1/query/compile can return a simple Spark SQL string for a trivial payload (e.g. SELECT * FROM t). Do not implement full compilation yet.”
+- Frontend: “In project QB, ensure that when the user clicks Run Query, the preview shows the backend response (e.g. echo or sql). Describe what you checked or changed.”
+
+## What to pass to mcp_task
+
+- **description**: Short label (e.g. “Backend: simple Spark response”).
+- **prompt**: Goal + brief context (as above). The subagent’s rule defines task scope; the prompt only sets the goal.
+- **subagent_type**: `generalPurpose` for implementation; `explore` for search/audit; `shell` for commands.
+- **readonly**: `true` if the task is exploration or review only.
+
+You do **not** need to list step-by-step instructions for the subagent; the role rule and the single goal in the prompt are enough. For ready-made goals and full prompts, see [.cursor/subagent-prompts.md](.cursor/subagent-prompts.md).

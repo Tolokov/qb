@@ -124,7 +124,7 @@ export default function PreviewPanel() {
         const entry: QueryHistoryEntry = {
           id: generateId(),
           timestamp: Date.now(),
-          name: `Query ${historyLength + 1}`,
+          name: t.queryTitle(historyLength + 1),
           blocks: JSON.parse(JSON.stringify(blocks)),
           json: jsonOutput,
           sql: sqlOutput,
@@ -141,7 +141,7 @@ export default function PreviewPanel() {
           : typeof err === "object" && err !== null && "message" in err
             ? String((err as { message: unknown }).message)
             : String(err);
-      setBackendError(message || "Неизвестная ошибка");
+      setBackendError(message || t.unknownError);
       setLastResult({ status: "error", time });
     } finally {
       setIsRunning(false);
@@ -175,9 +175,9 @@ export default function PreviewPanel() {
       </div>
 
       {lastResult && lastResult.status === "success" && (
-        <div className="flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-success/10 text-success">
+        <div className={cn("flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-success/10 text-success", locale === "braille" && "font-braille")}>
           <div className="h-1.5 w-1.5 rounded-full bg-success" />
-          <span className="font-medium">Ответ бекенда получен</span>
+          <span className="font-medium">{t.backendResponseReceived}</span>
           <span className="ml-auto flex items-center gap-1 opacity-60">
             <Clock className="h-3 w-3" />
             {lastResult.time}ms
@@ -185,80 +185,81 @@ export default function PreviewPanel() {
         </div>
       )}
       {lastResult && lastResult.status === "error" && (
-        <div className="flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-destructive/10 text-destructive">
+        <div className={cn("flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-destructive/10 text-destructive", locale === "braille" && "font-braille")}>
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          <span className="font-medium">Ошибка запроса к бекенду</span>
+          <span className="font-medium">{t.backendRequestError}</span>
         </div>
       )}
 
-      {backendResponse && (
-        <div className="border-b border-border px-4 py-3 bg-muted/30">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Ответ бекенда
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1.5 text-[11px] rounded-lg shrink-0"
-              onClick={async () => {
-                await navigator.clipboard.writeText(backendResponse);
-                setCopiedBackendSql(true);
-                setTimeout(() => setCopiedBackendSql(false), 2000);
-              }}
-            >
-              {copiedBackendSql ? (
-                <Check className="h-3.5 w-3.5 text-success" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-              {copiedBackendSql ? "Скопировано" : "Копировать"}
-            </Button>
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        {backendResponse && (
+          <div className={cn("border-b border-border px-4 py-3 bg-muted/30 shrink-0", locale === "braille" && "font-braille")}>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {t.backendResponseLabel}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-[11px] rounded-lg shrink-0"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(backendResponse);
+                  setCopiedBackendSql(true);
+                  setTimeout(() => setCopiedBackendSql(false), 2000);
+                }}
+              >
+                {copiedBackendSql ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                {copiedBackendSql ? t.copiedButton : t.copyButton}
+              </Button>
+            </div>
+            <pre className="p-3 rounded-lg border border-border bg-card text-[12px] font-mono leading-5 text-card-foreground overflow-x-auto overflow-y-auto max-h-[280px] whitespace-pre-wrap break-words">
+              {backendResponse}
+            </pre>
           </div>
-          <pre className="p-3 rounded-lg border border-border bg-card text-[12px] font-mono leading-5 text-card-foreground overflow-x-auto">
-            {backendResponse}
-          </pre>
-        </div>
-      )}
+        )}
 
-      {backendError && (
-        <div className="border-b border-border px-4 py-3 bg-destructive/5">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-[11px] font-semibold text-destructive uppercase tracking-wider">
-              Ошибка
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1.5 text-[11px] rounded-lg shrink-0 border-destructive/50 text-destructive hover:bg-destructive/10"
-              onClick={async () => {
-                await navigator.clipboard.writeText(backendError);
-                setCopiedBackendSql(true);
-                setTimeout(() => setCopiedBackendSql(false), 2000);
-              }}
-            >
-              {copiedBackendSql ? (
-                <Check className="h-3.5 w-3.5 text-success" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-              Копировать
-            </Button>
+        {backendError && (
+          <div className={cn("border-b border-border px-4 py-3 bg-destructive/5 shrink-0", locale === "braille" && "font-braille")}>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-[11px] font-semibold text-destructive uppercase tracking-wider">
+                {t.backendErrorLabel}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-[11px] rounded-lg shrink-0 border-destructive/50 text-destructive hover:bg-destructive/10"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(backendError);
+                  setCopiedBackendSql(true);
+                  setTimeout(() => setCopiedBackendSql(false), 2000);
+                }}
+              >
+                {copiedBackendSql ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                {t.copyButton}
+              </Button>
+            </div>
+            <pre className="p-3 rounded-lg border border-destructive/20 bg-card text-[12px] font-mono leading-5 text-destructive overflow-x-auto overflow-y-auto max-h-[280px] whitespace-pre-wrap break-words">
+              {backendError}
+            </pre>
           </div>
-          <pre className="p-3 rounded-lg border border-destructive/20 bg-card text-[12px] font-mono leading-5 text-destructive overflow-x-auto whitespace-pre-wrap break-words">
-            {backendError}
-          </pre>
-        </div>
-      )}
+        )}
 
-      {copyError && (
-        <div className="flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-destructive/10 text-destructive">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          <span>{copyError}</span>
-        </div>
-      )}
+        {copyError && (
+          <div className="flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-destructive/10 text-destructive shrink-0">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>{copyError}</span>
+          </div>
+        )}
 
-      <Tabs defaultValue="sql" className="flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="sql" className="flex-1 flex flex-col min-h-0 shrink-0">
         <div className="px-4 pt-2.5 pb-2.5">
           <TabsList className="h-8 bg-secondary/50 rounded-lg p-0.5 w-full">
             <TabsTrigger
@@ -340,7 +341,8 @@ export default function PreviewPanel() {
             </ScrollArea>
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }
