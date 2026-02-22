@@ -142,12 +142,12 @@ export default function PreviewPanel() {
 
   return (
     <div className="flex h-full flex-col bg-card">
-      <div className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
+      <div className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-4 py-2 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 shrink-0">
             <Terminal className="h-3 w-3 text-primary" />
           </div>
-          <h2 className="text-[13px] font-semibold text-card-foreground">
+          <h2 className="text-[13px] font-semibold text-card-foreground truncate">
             Output
           </h2>
         </div>
@@ -251,7 +251,7 @@ export default function PreviewPanel() {
       )}
 
       <Tabs defaultValue="sql" className="flex-1 flex flex-col min-h-0">
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-2.5 pb-2.5">
           <TabsList className="h-8 bg-secondary/50 rounded-lg p-0.5 w-full">
             <TabsTrigger
               value="sql"

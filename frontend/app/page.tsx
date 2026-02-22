@@ -212,8 +212,7 @@ export default function QueryBuilderPage() {
             role="separator"
             aria-label="Изменить ширину панели компонентов"
             onMouseDown={startComponentsResize}
-            className={`shrink-0 w-1 min-w-1 bg-border hover:bg-primary/20 transition-colors cursor-col-resize flex items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 ${draggedItem || draggedBlockId ? "pointer-events-none" : ""}`}
-            style={{ position: "relative" }}
+            className={`relative shrink-0 w-px bg-border hover:bg-primary/20 transition-colors cursor-col-resize flex items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 ${draggedItem || draggedBlockId ? "pointer-events-none" : ""}`}
           />
 
           <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 bg-background">

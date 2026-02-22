@@ -23,7 +23,7 @@ import { QUERY_TEMPLATES } from "@/lib/query-templates";
 import type { QueryHistoryEntry } from "@/lib/types";
 
 const btnClass =
-  "h-8 min-w-[4.5rem] gap-1.5 text-[11px] rounded-md border border-border bg-card/50 text-muted-foreground hover:text-card-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:pointer-events-none";
+  "h-7 min-w-0 gap-1 text-[10px] rounded-md border border-border bg-card/50 text-muted-foreground hover:text-card-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:pointer-events-none sm:h-8 sm:min-w-[4rem] sm:gap-1.5 sm:text-[11px] shrink-0";
 
 export default function BuilderCanvas() {
   const blocks = useQueryStore((s) => s.blocks);
@@ -59,21 +59,21 @@ export default function BuilderCanvas() {
       className="flex h-full flex-col bg-canvas"
       onClick={() => setActiveBlockId(null)}
     >
-      <div className="flex items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-5 py-3 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
-            <Layers className="h-3.5 w-3.5 text-primary" />
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-card/80 backdrop-blur-sm px-3 py-2 min-w-0 shrink-0 sm:px-4 sm:py-2.5 md:px-5 md:py-3">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0">
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 shrink-0 sm:h-6 sm:w-6">
+            <Layers className="h-3 w-3 text-primary sm:h-3.5 sm:w-3.5" />
           </div>
-          <h2 className="text-[13px] font-semibold text-card-foreground">
+          <h2 className="text-[11px] font-semibold text-card-foreground truncate sm:text-[12px] md:text-[13px]">
             Query Builder
           </h2>
           {blocks.length > 0 && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium tabular-nums">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium tabular-nums shrink-0 sm:text-[11px] sm:px-2">
               {blocks.length}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 min-w-0">
           {/* Шаблоны */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -84,9 +84,9 @@ export default function BuilderCanvas() {
                 className={btnClass}
                 aria-label="Выбрать шаблон запроса"
               >
-                <LayoutTemplate className="h-3.5 w-3.5" />
-                Шаблоны
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                <LayoutTemplate className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+                <span className="truncate">Шаблоны</span>
+                <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className="w-64 rounded-xl shadow-xl">
@@ -122,9 +122,9 @@ export default function BuilderCanvas() {
                 className={btnClass}
                 aria-label="История запросов"
               >
-                <Clock className="h-3.5 w-3.5" />
-                История
-                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                <Clock className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+                <span className="truncate">История</span>
+                <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className="w-72 rounded-xl shadow-xl max-h-[70vh] overflow-hidden flex flex-col">
@@ -207,8 +207,8 @@ export default function BuilderCanvas() {
             className={`${btnClass} hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30`}
             aria-label="Очистить рабочее поле"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Очистить
+            <Trash2 className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+            <span className="truncate">Очистить</span>
           </Button>
         </div>
       </div>

@@ -150,16 +150,16 @@ export default function SidebarLibrary() {
   return (
     <div className="flex h-full flex-col bg-card overflow-x-auto">
       <div className="w-full min-w-[240px] shrink-0 flex flex-col h-full border-r border-border">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
-        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
+      {/* Header — высота совпадает с шапкой Output (py-3) */}
+      <div className="flex items-center gap-2.5 border-b border-border px-4 py-3 shrink-0">
+        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 shrink-0">
           <Braces className="h-3 w-3 text-primary" />
         </div>
-        <h2 className="text-[13px] font-semibold text-card-foreground">Components</h2>
+        <h2 className="text-[13px] font-semibold text-card-foreground truncate">Components</h2>
       </div>
 
-      {/* Search */}
-      <div className="px-3 py-2.5 border-b border-border">
+      {/* Search — верхняя граница на одной высоте с блоком SQL/JSON в Output */}
+      <div className="px-3 py-2.5 border-b border-border shrink-0">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
