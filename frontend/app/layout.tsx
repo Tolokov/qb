@@ -14,6 +14,7 @@ const _jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "QueryCraft - Visual SQL Builder",
   description: "Build SQL queries visually with a drag-and-drop interface",
+  icons: { icon: "/icon.png" },
 };
 
 export const viewport: Viewport = {

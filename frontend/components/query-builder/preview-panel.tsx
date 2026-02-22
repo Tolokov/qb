@@ -21,7 +21,7 @@ import {
   compileQueryOnBackend,
   formatBackendResponse,
 } from "@/lib/api";
-import { generateId } from "@/lib/utils";
+import { generateId, cn } from "@/lib/utils";
 import type { QueryHistoryEntry } from "@/lib/types";
 import { TRANSLATIONS } from "@/lib/translations";
 import { useLocale } from "@/hooks/use-locale";
@@ -300,8 +300,8 @@ export default function PreviewPanel() {
                 {sqlOutput ? (
                   <SqlHighlight sql={sqlOutput} />
                 ) : (
-                  <span className="text-muted-foreground/60 italic text-[11px]">
-                    {"Add components to generate SQL"}
+                  <span className={cn("text-muted-foreground/60 italic text-[11px]", locale === "braille" && "font-braille")}>
+                    {t.addComponentsToGenerateSql}
                   </span>
                 )}
               </pre>

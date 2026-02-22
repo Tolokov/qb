@@ -37,6 +37,9 @@ import {
   type LibraryItem,
   type BlockCategory,
 } from "@/lib/types";
+import { TRANSLATIONS } from "@/lib/translations";
+import { useLocale } from "@/hooks/use-locale";
+import { cn } from "@/lib/utils";
 import { useQueryStore } from "@/lib/query-store";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -123,6 +126,8 @@ const DEFAULT_COLLAPSED: BlockCategory[] = [
 ];
 
 export default function SidebarLibrary() {
+  const { locale } = useLocale();
+  const t = TRANSLATIONS[locale];
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(ALL_CATEGORIES.map((c) => [c, DEFAULT_COLLAPSED.includes(c)]))
@@ -165,8 +170,8 @@ export default function SidebarLibrary() {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search components..."
-            className="pl-8 h-8 text-xs bg-secondary/50 border-border placeholder:text-muted-foreground"
+            placeholder={t.searchComponents}
+            className={cn("pl-8 h-8 text-xs bg-secondary/50 border-border placeholder:text-muted-foreground", locale === "braille" && "font-braille")}
           />
         </div>
       </div>
