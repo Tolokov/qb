@@ -214,9 +214,9 @@ export default function BuilderCanvas() {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="min-h-full p-5 canvas-grid">
+        <div className="p-5 canvas-grid flex flex-col min-h-0">
           {blocks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-28 text-center">
+            <div className="flex flex-col items-center justify-center py-28 text-center flex-1 min-h-[280px]">
               <div className="relative mb-5">
                 <div className="rounded-2xl bg-card p-6 shadow-sm border border-border">
                   <MousePointerClick className="h-10 w-10 text-muted-foreground/30" />
@@ -232,44 +232,50 @@ export default function BuilderCanvas() {
                 Drag items from the sidebar to start building your SQL query visually
               </p>
             </div>
-          ) : (() => {
-              const rows = groupBlocksIntoRows(blocks);
-              const visualOrder = rows.flatMap((r) => r);
-              const visualIds = visualOrder.map((b) => b.id);
-              return (
-                <SortableContext
-                  items={visualIds}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="flex flex-col gap-3">
-                    {rows.map((row) =>
-                      row.length > 0 ? (
-                        <div
-                          key={row.map((b) => b.id).join("-")}
-                          className="flex flex-wrap gap-2.5 items-start content-start"
-                        >
-                          {row.map((block) => (
-                            <BlockCard
-                              key={block.id}
-                              block={block}
-                              index={visualOrder.findIndex((b) => b.id === block.id)}
-                            />
-                          ))}
-                        </div>
-                      ) : null
-                    )}
-                  </div>
-                </SortableContext>
-              );
-            })()}
-
-          {/* Drop hint */}
-          {blocks.length > 0 && (
-            <div className="mt-3 rounded-xl border-2 border-dashed border-border/40 py-3 text-center">
-              <p className="text-[11px] text-muted-foreground/60">
-                Drop here to add
-              </p>
-            </div>
+          ) : (
+            <>
+              {(() => {
+                const rows = groupBlocksIntoRows(blocks);
+                const visualOrder = rows.flatMap((r) => r);
+                const visualIds = visualOrder.map((b) => b.id);
+                return (
+                  <SortableContext
+                    items={visualIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="flex flex-col gap-3 shrink-0">
+                      {rows.map((row) =>
+                        row.length > 0 ? (
+                          <div
+                            key={row.map((b) => b.id).join("-")}
+                            className="flex flex-wrap gap-2.5 items-start content-start"
+                          >
+                            {row.map((block) => (
+                              <BlockCard
+                                key={block.id}
+                                block={block}
+                                index={visualOrder.findIndex((b) => b.id === block.id)}
+                              />
+                            ))}
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  </SortableContext>
+                );
+              })()}
+              <div
+                className="mt-3 flex-1 min-h-[100px] rounded-xl border-2 border-dashed border-border/50 bg-muted/20 flex flex-col items-center justify-center gap-1.5 py-6"
+                aria-label="Drop zone for new blocks"
+              >
+                <p className="text-xs font-medium text-muted-foreground">
+                  Drop here to add a block
+                </p>
+                <p className="text-[11px] text-muted-foreground/70">
+                  Drag a component from the left panel
+                </p>
+              </div>
+            </>
           )}
         </div>
       </ScrollArea>

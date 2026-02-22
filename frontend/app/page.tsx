@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -27,10 +27,16 @@ import { useQueryStore } from "@/lib/query-store";
 import type { LibraryItem } from "@/lib/types";
 import { CATEGORY_COLORS } from "@/lib/types";
 
+const COMPONENTS_PANEL_MIN = 240;
+const COMPONENTS_PANEL_MAX = 480;
+
 export default function QueryBuilderPage() {
   const [mounted, setMounted] = useState(false);
   const [draggedItem, setDraggedItem] = useState<LibraryItem | null>(null);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [componentsPanelWidth, setComponentsPanelWidth] = useState(COMPONENTS_PANEL_MIN);
+  const [isResizingComponents, setIsResizingComponents] = useState(false);
+  const resizeStartRef = useRef<{ startX: number; startW: number } | null>(null);
 
   const addBlock = useQueryStore((s) => s.addBlock);
   const reorderRootBlocks = useQueryStore((s) => s.reorderRootBlocks);
@@ -42,6 +48,32 @@ export default function QueryBuilderPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const startComponentsResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizeStartRef.current = { startX: e.clientX, startW: componentsPanelWidth };
+    setIsResizingComponents(true);
+  }, [componentsPanelWidth]);
+
+  useEffect(() => {
+    if (!isResizingComponents) return;
+    const onMove = (e: MouseEvent) => {
+      const r = resizeStartRef.current;
+      if (!r) return;
+      const next = r.startW + (e.clientX - r.startX);
+      setComponentsPanelWidth(Math.min(COMPONENTS_PANEL_MAX, Math.max(COMPONENTS_PANEL_MIN, next)));
+    };
+    const onUp = () => {
+      resizeStartRef.current = null;
+      setIsResizingComponents(false);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isResizingComponents]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -169,29 +201,36 @@ export default function QueryBuilderPage() {
       <div className="flex h-screen flex-col bg-background">
         <TopNav />
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 bg-background">
-          <ResizablePanel defaultSize={19} minSize={15} maxSize={28}>
+        <div className="flex flex-1 min-h-0 min-w-0">
+          <aside
+            className="shrink-0 flex flex-col min-h-0 bg-background"
+            style={{ width: componentsPanelWidth, minWidth: COMPONENTS_PANEL_MIN }}
+          >
             <SidebarLibrary />
-          </ResizablePanel>
-
-          <ResizableHandle
-            disabled={!!(draggedItem || draggedBlockId)}
-            className="w-1 min-w-1 bg-canvas hover:bg-primary/20 transition-colors shrink-0 disabled:hover:bg-canvas"
+          </aside>
+          <div
+            role="separator"
+            aria-label="Изменить ширину панели компонентов"
+            onMouseDown={startComponentsResize}
+            className={`shrink-0 w-1 min-w-1 bg-border hover:bg-primary/20 transition-colors cursor-col-resize flex items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 ${draggedItem || draggedBlockId ? "pointer-events-none" : ""}`}
+            style={{ position: "relative" }}
           />
 
-          <ResizablePanel defaultSize={48} minSize={30}>
-            <BuilderCanvas />
-          </ResizablePanel>
+          <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 bg-background">
+            <ResizablePanel defaultSize={72} minSize={60}>
+              <BuilderCanvas />
+            </ResizablePanel>
 
-          <ResizableHandle
-            disabled={!!(draggedItem || draggedBlockId)}
-            className="w-px bg-border hover:bg-primary/20 transition-colors"
-          />
+            <ResizableHandle
+              disabled={!!(draggedItem || draggedBlockId)}
+              className="w-px bg-border hover:bg-primary/20 transition-colors"
+            />
 
-          <ResizablePanel defaultSize={32} minSize={22} maxSize={45}>
-            <PreviewPanel />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            <ResizablePanel defaultSize={28} minSize={15} maxSize={40}>
+              <PreviewPanel />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
       </div>
 
       <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>

@@ -148,7 +148,8 @@ export default function SidebarLibrary() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-card">
+    <div className="flex h-full flex-col bg-card overflow-x-auto">
+      <div className="w-full min-w-[240px] shrink-0 flex flex-col h-full border-r border-border">
       {/* Header */}
       <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
         <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
@@ -205,6 +206,7 @@ export default function SidebarLibrary() {
           })}
         </div>
       </ScrollArea>
+      </div>
     </div>
   );
 }
