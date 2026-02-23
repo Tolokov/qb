@@ -14,6 +14,7 @@ These rules are included in each role rule (Product Owner, Backend, Frontend) so
 - **Errors and edge cases**: Always handle errors and edge cases explicitly (timeouts, retries, None/null, empty lists, invalid input).
 - **Public contracts**: Do not change public APIs, function signatures, DB schemas, or message formats unless explicitly requested. If needed, propose a migration plan.
 - **Dependencies**: Never add new dependencies unless explicitly requested or clearly justified. Prefer standard library and existing dependencies.
+- **Documentation in code**: Do **not** add file-level documentation (no module docstrings, no comment blocks at the top or elsewhere in the file). Do not add inline comments that repeat what types or structure already convey. Use docstrings only inside functions or classes when truly needed, and keep them minimal; type annotations and architecture are sufficient for understanding.
 - **Conventions**: Always follow existing project conventions (structure, naming, patterns, logging, error handling). If unsure, search for similar code in the repo and match it.
 - **Scope of change**: Always prefer the smallest change that solves the problem. Do not refactor unrelated parts.
 - **Design**: Follow SOLID, YAGNI, and KISS principles.
