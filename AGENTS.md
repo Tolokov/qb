@@ -25,9 +25,10 @@ All role rules **include the user rules from Cursor settings** (security, typing
 
 When you **delegate to a subagent** (e.g. via `mcp_task`):
 
-1. **Enable** the rule **Subagent delegation** (`subagent-delegation.mdc`) **first** so the router knows how to choose the agent and form the prompt.
-2. **Do not** specify the exact task for each subagent. State the **goal** (e.g. “Ensure backend returns a simple Spark SQL string” or “Evaluate project stage and next step”). The role’s **task scope** (see table above) automatically narrows the work.
-3. The **delegation rule** maps your intent to a subagent type and suggests a short prompt (goal + context). Use `generalPurpose` for implementation, `explore` for read-only search/audit, `shell` for commands. Ready-made goals and full prompts: [.cursor/subagent-prompts.md](.cursor/subagent-prompts.md).
+The rule is **applied automatically** (`alwaysApply: true`). No need to enable it manually.
+
+1. **Do not** specify the exact task for each subagent. State the **goal** (e.g. “Ensure backend returns a simple Spark SQL string” or “Evaluate project stage and next step”). The role’s **task scope** (see table above) automatically narrows the work.
+2. The **delegation rule** maps your intent to a subagent type and suggests a short prompt (goal + context). Use `generalPurpose` for implementation, `explore` for read-only search/audit, `shell` for commands. Ready-made goals and full prompts: [.cursor/subagent-prompts.md](.cursor/subagent-prompts.md).
 
 For mixed tasks (e.g. backend + frontend), delegate **once per area** with one goal each. For ambiguous or cross-layer requests, the delegation rule describes how to split or fall back.
 

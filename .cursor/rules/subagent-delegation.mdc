@@ -1,11 +1,11 @@
 ---
 description: Subagent delegation — route tasks and auto-generate prompts; when to launch subagents (always for matching tasks)
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Subagent delegation (routing and auto-task generation)
 
-**When to enable:** Enable this rule when **delegating work to a subagent** (e.g. via mcp_task). You do **not** need to specify the exact task for each subagent; routing and task theme are derived from the user’s request and the role’s scope.
+**Applied automatically** (`alwaysApply: true`). When the user's request matches the routing table below, **delegate** to the corresponding subagent (e.g. via mcp_task). You do **not** need to specify the exact task for each subagent; routing and task theme are derived from the user’s request and the role’s scope.
 
 ## When to launch subagents (automation)
 
