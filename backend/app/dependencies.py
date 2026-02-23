@@ -1,8 +1,9 @@
 import logging
 from functools import lru_cache
 
+from fastapi import HTTPException
+
 from app.repositories.echo_repository import EchoQueryRepository
-from app.repositories.memory_repository import MemorySparkRepository
 from app.repositories.spark_repository import SparkRepository
 from app.services.crud_service import CrudService
 from app.services.query_service import QueryService
@@ -21,17 +22,14 @@ def get_query_service() -> QueryService:
 
 
 @lru_cache
-def get_spark_repository() -> SparkRepository | MemorySparkRepository:
+def get_spark_repository() -> SparkRepository:
+    """Return Spark-backed repository or fail with 503 if Spark is unavailable."""
     try:
         spark = get_spark_session()
-        return SparkRepository(spark=spark)
-    except Exception as e:
-        logger.warning(
-            "Spark/JVM unavailable, using in-memory CRUD: %s",
-            e,
-            exc_info=False,
-        )
-        return MemorySparkRepository()
+    except Exception as e:  # pragma: no cover - environment-specific failures
+        logger.error("Spark/JVM unavailable for CRUD: %s", e, exc_info=False)
+        raise HTTPException(status_code=503, detail="Spark/JVM unavailable") from e
+    return SparkRepository(spark=spark)
 
 
 def get_crud_service() -> CrudService:

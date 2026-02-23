@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from pyspark.sql import SparkSession
+from pyspark.sql import types as T
 from pyspark.sql.functions import col
 
 from app.spark_tables import (
@@ -17,6 +18,17 @@ TABLE_SCHEMAS = {
     "orders": ORDERS_SCHEMA,
     "products": PRODUCTS_SCHEMA,
 }
+
+
+def _row_for_spark(row: dict[str, Any], schema: T.StructType) -> dict[str, Any]:
+    """Convert row for createDataFrame: float -> Decimal for DecimalType fields."""
+    out = dict(row)
+    for field in schema.fields:
+        if isinstance(field.dataType, T.DecimalType) and field.name in out and out[field.name] is not None:
+            v = out[field.name]
+            if not isinstance(v, Decimal):
+                out[field.name] = Decimal(str(v))
+    return out
 
 
 def _row_to_json(row: Any) -> dict[str, Any]:
@@ -35,6 +47,14 @@ def _row_to_json(row: Any) -> dict[str, Any]:
         else:
             out[k] = v
     return out
+
+
+def _overwrite_table_from_df(spark: SparkSession, df: Any, table_name: str) -> None:
+    """Write df to table via temp path to avoid 'read and overwrite same table' error."""
+    warehouse = spark.conf.get("spark.sql.warehouse.dir", ".")
+    temp_path = f"{warehouse}/_temp_repo_{table_name}"
+    df.write.mode("overwrite").parquet(temp_path)
+    spark.read.parquet(temp_path).write.mode("overwrite").saveAsTable(table_name)
 
 
 class SparkRepository:
@@ -67,6 +87,7 @@ class SparkRepository:
         schema = TABLE_SCHEMAS.get(table_name)
         if not schema:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
+        row = _row_for_spark(row, schema)
         new_df = self._spark.createDataFrame([row], schema)
         new_df.write.mode("append").saveAsTable(table_name)
         return _row_to_json(new_df.collect()[0])
@@ -81,9 +102,10 @@ class SparkRepository:
         if not existing:
             return None
         rest = df.filter(col("id") != id_value)
+        row = _row_for_spark(row, schema)
         updated_row = self._spark.createDataFrame([row], schema)
         combined = rest.unionByName(updated_row, allowMissingColumns=True)
-        combined.write.mode("overwrite").saveAsTable(table_name)
+        _overwrite_table_from_df(self._spark, combined, table_name)
         return _row_to_json(updated_row.collect()[0])
 
     def delete(self, table_name: str, id_value: int) -> bool:
@@ -94,5 +116,5 @@ class SparkRepository:
         to_keep = df.filter(col("id") != id_value)
         if to_keep.count() == df.count():
             return False
-        to_keep.write.mode("overwrite").saveAsTable(table_name)
+        _overwrite_table_from_df(self._spark, to_keep, table_name)
         return True

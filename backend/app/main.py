@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.routes.backend import router as backend_router
 from app.api.v1.routes.orders import router as orders_router
 from app.api.v1.routes.products import router as products_router
 from app.api.v1.routes.query import router as query_router
@@ -23,6 +24,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.include_router(backend_router, prefix=SETTINGS.api_v1_prefix)
     app.include_router(query_router, prefix=SETTINGS.api_v1_prefix)
     app.include_router(users_router, prefix=SETTINGS.api_v1_prefix)
     app.include_router(orders_router, prefix=SETTINGS.api_v1_prefix)
