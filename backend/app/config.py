@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 60
     rate_limit_window_sec: int = 60
     sql_injection_patterns: tuple[str, ...] = ()
+    # Spark: used by CRUD / SparkRepository (local mode by default)
+    SPARK_MASTER: str = "local[*]"
+    SPARK_WAREHOUSE_DIR: str = "defaultLakehouse"
     model_config = SettingsConfigDict(
         env_prefix="APP_",
         env_file=".env",

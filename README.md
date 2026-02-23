@@ -76,6 +76,8 @@ uvicorn app.main:app --reload
 - Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
 - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
+**CRUD по таблицам Spark:** поднять кластер `docker compose up -d spark-master spark-worker`, на хосте нужна JVM и переменные окружения (см. [backend/docs/SPARK_TABLES.md](backend/docs/SPARK_TABLES.md)).
+
 ---
 
 ## Документация
@@ -85,6 +87,8 @@ uvicorn app.main:app --reload
 | [AGENTS.md](AGENTS.md) | Роли агентов в проекте (Product Owner, Backend, Frontend) и когда какую правило подключать. |
 | [CHANGELOG.md](CHANGELOG.md) | История изменений по версиям: что добавлено, изменено и исправлено. |
 | [backend/app/README.md](backend/app/README.md) | Примеры перевода SQL в PySpark (справочник по конвертации). |
+| [backend/docs/SPARK_TABLES.md](backend/docs/SPARK_TABLES.md) | Взаимодействие с таблицами Spark через бекенд (API → Service → Repository). |
+| [backend/docs/SPARK_PYSPARK_VERSIONS.md](backend/docs/SPARK_PYSPARK_VERSIONS.md) | Совместимость версий PySpark и Apache Spark. |
 | [Makefile](Makefile) | Цели для сборки и запуска (см. также [раздел выше](#сборка-и-запуск-makefile)). |
 
 ---
