@@ -10,7 +10,7 @@ from app.spark_session import get_spark_session
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Backend"])
+router = APIRouter(tags=["Health"])
 
 
 def _check_frontend() -> ComponentHealth:

@@ -1,6 +1,6 @@
 # SQL Query Builder — Конвертор запросов SQL в формат Spark SQL
 
-.PHONY: frontend backend run setup setup-frontend setup-backend ensure-backend help
+.PHONY: frontend backend run setup setup-frontend setup-backend ensure-backend pre help
 
 # Зарезервированные константы окружения
 FRONTEND_PORT ?= 3000
@@ -15,6 +15,7 @@ help:
 	@echo "  make setup      — установка зависимостей (frontend + backend)"
 	@echo "  make setup-frontend  — pnpm install в frontend/"
 	@echo "  make setup-backend   — venv + pip install в backend/"
+	@echo "  make pre         — pre-commit + pytest для бекенда"
 	@echo ""
 	@echo "После make run: Ctrl+C останавливает оба процесса."
 
@@ -38,6 +39,11 @@ frontend:
 # Запуск только бекенда (при первом запуске автоматически выполняется setup-backend)
 backend: ensure-backend
 	cd backend && APP_SPARK_WAREHOUSE_DIR="$(SPARK_WAREHOUSE_DIR)" ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+
+# Pre-commit + pytest для бекенда
+pre: ensure-backend
+	cd backend && pre-commit run --config .pre-commit-config.yaml --all-files
+	cd backend && ./venv/bin/pytest
 
 # Запуск фронтенда и бекенда вместе (Ctrl+C останавливает оба)
 run: ensure-backend

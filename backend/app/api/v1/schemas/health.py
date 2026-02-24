@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class ComponentHealth(BaseModel):
     status: Literal["ok", "down"]
-    detail: str | None = None
+    detail: str = "No errors"
 
 
 class HealthResponse(BaseModel):

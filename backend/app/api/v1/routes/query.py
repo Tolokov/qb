@@ -6,7 +6,7 @@ from app.api.v1.schemas.query import QueryResponse
 from app.dependencies import get_query_service
 from app.services.query_service import QueryService
 
-router = APIRouter()
+router = APIRouter(tags=["Query"])
 
 
 def _extract_payload(body: Any) -> Any:
