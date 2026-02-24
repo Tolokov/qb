@@ -6,6 +6,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import types as T
 from pyspark.sql.functions import col
 
+from app.exceptions import DuplicateIdError
 from app.spark_tables import (
     USERS_SCHEMA,
     ORDERS_SCHEMA,
@@ -87,6 +88,8 @@ class SparkRepository:
         schema = TABLE_SCHEMAS.get(table_name)
         if not schema:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
+        if "id" in row and self.get_by_id(table_name, row["id"]) is not None:
+            raise DuplicateIdError(f"Row with id {row['id']} already exists")
         row = _row_for_spark(row, schema)
         new_df = self._spark.createDataFrame([row], schema)
         new_df.write.mode("append").saveAsTable(table_name)

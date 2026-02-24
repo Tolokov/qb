@@ -5,6 +5,7 @@
 # Порты (для справки)
 FRONTEND_PORT ?= 3000
 BACKEND_PORT ?= 8000
+SPARK_WAREHOUSE_DIR ?= $(CURDIR)/defaultLakehouse
 
 help:
 	@echo "Использование:"
@@ -36,10 +37,10 @@ frontend:
 
 # Запуск только бекенда (при первом запуске автоматически выполняется setup-backend)
 backend: ensure-backend
-	cd backend && ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+	cd backend && APP_SPARK_WAREHOUSE_DIR="$(SPARK_WAREHOUSE_DIR)" ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
 
 # Запуск фронтенда и бекенда вместе (Ctrl+C останавливает оба)
 run: ensure-backend
-	@(cd backend && ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)) & \
+	@(cd backend && APP_SPARK_WAREHOUSE_DIR="$(SPARK_WAREHOUSE_DIR)" ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)) & \
 	(cd frontend && pnpm dev) & \
 	wait

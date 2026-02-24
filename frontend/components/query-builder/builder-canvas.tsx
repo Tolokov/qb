@@ -49,7 +49,7 @@ export default function BuilderCanvas() {
       const timeHHmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const draft: QueryHistoryEntry = {
         id: generateId(),
-        timestamp: Date.now(),
+        timestamp: now.getTime(),
         name: t.draftTitle(timeHHmm),
         blocks: JSON.parse(JSON.stringify(blocks)),
         json: JSON.stringify(blocksToJson(blocks), null, 2),
@@ -263,11 +263,7 @@ export default function BuilderCanvas() {
                             className="flex flex-wrap gap-2.5 items-start content-start"
                           >
                             {row.map((block) => (
-                              <BlockCard
-                                key={block.id}
-                                block={block}
-                                index={visualOrder.findIndex((b) => b.id === block.id)}
-                              />
+                              <BlockCard key={block.id} block={block} />
                             ))}
                           </div>
                         ) : null

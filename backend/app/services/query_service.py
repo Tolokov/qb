@@ -12,15 +12,17 @@ class QueryService:
     def __init__(self, repository: IQueryRepository) -> None:
         self._repository = repository
 
-    def execute(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def execute(self, payload: Any) -> dict[str, Any]:
         """
         Обрабатывает запрос: проверки, валидация, вызов репозитория.
         Репозиторий — конечная точка (эхо или БД).
+        Принимает любой JSON (object/array/string/number/bool/null).
         """
         try:
             self._validate_payload_type(payload)
-            self._validate_payload_structure(payload)
-            self._validate_business_rules(payload)
+            if isinstance(payload, dict):
+                self._validate_payload_structure(payload)
+                self._validate_business_rules(payload)
         except ValueError as e:
             logger.warning("Validation failed: %s", e)
             raise HTTPException(status_code=400, detail=str(e)) from e
@@ -33,9 +35,10 @@ class QueryService:
         return self._repository.execute(payload)
 
     def _validate_payload_type(self, payload: object) -> None:
-        """Проверка типа payload. Зарезервировано для реализации."""
-        if not isinstance(payload, dict):
-            raise ValueError("Payload must be a JSON object")
+        """Допустимы любые JSON-типы: dict, list, str, int, float, bool, None."""
+        allowed = (dict, list, str, int, float, bool, type(None))
+        if not isinstance(payload, allowed):
+            raise ValueError("Body must be valid JSON (object/array/string/number/bool/null)")
 
     def _validate_payload_structure(self, payload: dict[str, Any]) -> None:
         """Проверка структуры payload (обязательные поля, типы). Зарезервировано для реализации."""

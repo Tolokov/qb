@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+from app.exceptions import DuplicateIdError
 from app.repositories.spark_repository import TABLE_SCHEMAS
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,8 @@ class MemorySparkRepository:
     def create(self, table_name: str, row: dict[str, Any]) -> dict[str, Any]:
         if table_name not in TABLE_SCHEMAS:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
+        if "id" in row and self.get_by_id(table_name, row["id"]) is not None:
+            raise DuplicateIdError(f"Row with id {row['id']} already exists")
         out = dict(row)
         self._data[table_name].append(out)
         return _row_to_response(out)

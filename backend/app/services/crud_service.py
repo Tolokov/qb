@@ -14,6 +14,7 @@ from app.api.v1.schemas.crud import (
     UserResponse,
     UserUpdate,
 )
+from app.exceptions import DuplicateIdError
 from app.repositories.spark_repository import SparkRepository
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,8 @@ class CrudService:
         try:
             created = self._repo.create("users", data)
             return UserResponse.model_validate(created)
+        except DuplicateIdError as e:
+            raise HTTPException(status_code=409, detail=str(e)) from e
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -107,6 +110,8 @@ class CrudService:
         try:
             created = self._repo.create("orders", data)
             return OrderResponse.model_validate(created)
+        except DuplicateIdError as e:
+            raise HTTPException(status_code=409, detail=str(e)) from e
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -158,6 +163,8 @@ class CrudService:
         try:
             created = self._repo.create("products", data)
             return ProductResponse.model_validate(created)
+        except DuplicateIdError as e:
+            raise HTTPException(status_code=409, detail=str(e)) from e
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
 

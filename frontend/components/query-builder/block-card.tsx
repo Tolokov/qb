@@ -23,7 +23,6 @@ import {
   Braces,
   X,
   GripVertical,
-  ChevronDown,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -77,7 +76,6 @@ function getIconForBlock(block: QueryBlock): React.ComponentType<{ className?: s
 interface BlockCardProps {
   block: QueryBlock;
   depth?: number;
-  index?: number;
 }
 
 function ContainerDropZone({
@@ -108,7 +106,7 @@ function ContainerDropZone({
   );
 }
 
-export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProps) {
+export default function BlockCard({ block, depth = 0 }: BlockCardProps) {
   const activeBlockId = useQueryStore((s) => s.activeBlockId);
   const setActiveBlockId = useQueryStore((s) => s.setActiveBlockId);
   const updateBlockConfig = useQueryStore((s) => s.updateBlockConfig);
@@ -188,9 +186,9 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
                 isColumnBlock ? "h-4 w-4" : "h-5 w-5"
               }`}
             >
-              <Icon
-                className={`opacity-90 ${colors.text} ${isColumnBlock ? "h-3 w-3" : "h-3.5 w-3.5"}`}
-              />
+              {React.createElement(Icon, {
+                className: `opacity-90 ${colors.text} ${isColumnBlock ? "h-3 w-3" : "h-3.5 w-3.5"}`,
+              })}
             </div>
             <span
               className={`font-bold uppercase tracking-wider ${colors.text} ${
@@ -226,10 +224,10 @@ export default function BlockCard({ block, depth = 0, index = 0 }: BlockCardProp
       {/* Container children drop zone */}
       {isContainer && (
         <ContainerDropZone containerId={block.id}>
-          {hasChildren && block.children && block.children.length > 0 ? (
+            {hasChildren && block.children && block.children.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              {block.children.map((child, i) => (
-                <BlockCard key={child.id} block={child} depth={depth + 1} index={i} />
+              {block.children.map((child) => (
+                <BlockCard key={child.id} block={child} depth={depth + 1} />
               ))}
             </div>
           ) : (
@@ -252,6 +250,8 @@ function getError(errors: ValidationError[], field: string): ValidationError | u
   return errors.find((e) => e.field === field);
 }
 
+const REQUIRED_MARKER = <span className="text-destructive/80 font-normal" aria-hidden>*</span>;
+
 function ConfigInputs({
   block,
   onUpdate,
@@ -272,7 +272,6 @@ function ConfigInputs({
     return `${baseInputClass} ${baseInputSize} ${err ? "border-destructive focus-visible:ring-destructive/50" : ""}`;
   };
   const isEmpty = (val: unknown) => String(val ?? "").trim() === "";
-  const Required = () => <span className="text-destructive/80 font-normal" aria-hidden>*</span>;
 
   switch (block.type) {
     case "source": {
@@ -289,7 +288,7 @@ function ConfigInputs({
               aria-invalid={!!getError(errors, "table")}
               aria-describedby={getError(errors, "table") ? `err-${block.id}-table` : undefined}
             />
-            {tableEmpty && <Required />}
+            {tableEmpty && REQUIRED_MARKER}
           </div>
           {getError(errors, "table") && (
             <span id={`err-${block.id}-table`} className="text-[10px] text-destructive" role="alert">
@@ -315,7 +314,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "column")}
                 aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
               />
-              {columnEmpty && <Required />}
+              {columnEmpty && REQUIRED_MARKER}
             </div>
             {getError(errors, "column") && (
               <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
@@ -352,7 +351,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "column")}
                 aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
               />
-              {filterColumnEmpty && <Required />}
+              {filterColumnEmpty && REQUIRED_MARKER}
             </div>
             {getError(errors, "column") && (
               <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
@@ -392,7 +391,7 @@ function ConfigInputs({
                           aria-required
                           aria-invalid={!!getError(errors, "valueLow")}
                         />
-                        {valueLowEmpty && <Required />}
+                        {valueLowEmpty && REQUIRED_MARKER}
                       </div>
                     </div>
                     <span className="text-[10px] text-muted-foreground font-medium">AND</span>
@@ -406,7 +405,7 @@ function ConfigInputs({
                           aria-required
                           aria-invalid={!!getError(errors, "valueHigh")}
                         />
-                        {valueHighEmpty && <Required />}
+                        {valueHighEmpty && REQUIRED_MARKER}
                       </div>
                       {(getError(errors, "valueLow") || getError(errors, "valueHigh")) && (
                         <span className="text-[10px] text-destructive" role="alert">
@@ -427,7 +426,7 @@ function ConfigInputs({
                         aria-invalid={!!getError(errors, "value")}
                         aria-describedby={getError(errors, "value") ? `err-${block.id}-value` : undefined}
                       />
-                      {valueEmpty && <Required />}
+                      {valueEmpty && REQUIRED_MARKER}
                     </div>
                     {getError(errors, "value") && (
                       <span id={`err-${block.id}-value`} className="text-[10px] text-destructive" role="alert">
@@ -494,7 +493,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "column")}
                 aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
               />
-              {showAggRequired && <Required />}
+              {showAggRequired && REQUIRED_MARKER}
             </div>
             {getError(errors, "column") && (
               <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
@@ -529,7 +528,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "condition")}
                 aria-describedby={getError(errors, "condition") ? `err-${block.id}-condition` : undefined}
               />
-              {conditionEmpty && <Required />}
+              {conditionEmpty && REQUIRED_MARKER}
             </div>
             {getError(errors, "condition") && (
               <span id={`err-${block.id}-condition`} className="text-[10px] text-destructive" role="alert">
@@ -553,7 +552,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "column")}
                 aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
               />
-              {groupByColumnEmpty && <Required />}
+              {groupByColumnEmpty && REQUIRED_MARKER}
             </div>
             {getError(errors, "column") && (
               <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
@@ -579,7 +578,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "column")}
                 aria-describedby={getError(errors, "column") ? `err-${block.id}-column` : undefined}
               />
-              {orderColumnEmpty && <Required />}
+              {orderColumnEmpty && REQUIRED_MARKER}
             </div>
             {getError(errors, "column") && (
               <span id={`err-${block.id}-column`} className="text-[10px] text-destructive" role="alert">
@@ -625,7 +624,7 @@ function ConfigInputs({
                 aria-invalid={!!getError(errors, "limit")}
                 aria-describedby={getError(errors, "limit") ? `err-${block.id}-limit` : undefined}
               />
-              {limitEmpty && <Required />}
+              {limitEmpty && REQUIRED_MARKER}
             </div>
             {getError(errors, "limit") && (
               <span id={`err-${block.id}-limit`} className="text-[10px] text-destructive" role="alert">
@@ -660,7 +659,7 @@ function ConfigInputs({
               aria-invalid={!!getError(errors, "alias")}
               aria-describedby={getError(errors, "alias") ? `err-${block.id}-alias` : undefined}
             />
-            {aliasEmpty && <Required />}
+            {aliasEmpty && REQUIRED_MARKER}
           </div>
           {getError(errors, "alias") && (
             <span id={`err-${block.id}-alias`} className="text-[10px] text-destructive" role="alert">

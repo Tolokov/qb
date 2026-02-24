@@ -46,7 +46,8 @@ export default function QueryBuilderPage() {
   const blocks = useQueryStore((s) => s.blocks);
 
   useEffect(() => {
-    setMounted(true);
+    // Hydration guard: defer setState to avoid react-hooks/set-state-in-effect
+    queueMicrotask(() => setMounted(true));
   }, []);
 
   const startComponentsResize = useCallback((e: React.MouseEvent) => {

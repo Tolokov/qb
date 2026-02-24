@@ -12,7 +12,11 @@ class QueryRequest(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    echo: dict[str, Any] | None = Field(
+    echo: Any | None = Field(
         default=None,
-        description="Эхо переданного payload (режим эхо).",
+        description="Эхо переданного body (или payload при формате {payload: ...}).",
+    )
+    sql: str | None = Field(
+        default=None,
+        description="Скомпилированный SQL (опционально, когда реализована компиляция).",
     )

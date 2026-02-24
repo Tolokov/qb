@@ -17,8 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryStore, blocksToJson, blocksToSql } from "@/lib/query-store";
 import {
-  frontendJsonToBackendPayload,
-  compileQueryOnBackend,
+  compileRawJsonOnBackend,
   formatBackendResponse,
 } from "@/lib/api";
 import { generateId, cn } from "@/lib/utils";
@@ -109,9 +108,11 @@ export default function PreviewPanel() {
     const start = Date.now();
 
     try {
-      const json = blocksToJson(blocks) as Record<string, unknown>;
-      const payload = frontendJsonToBackendPayload(json);
-      const result = await compileQueryOnBackend(payload);
+      const json = blocksToJson(blocks) as unknown;
+      if (process.env.NODE_ENV === "development") {
+        console.log("[QB] JSON payload sent to backend:", json);
+      }
+      const result = await compileRawJsonOnBackend(json);
       const time = Date.now() - start;
       setBackendResponse(formatBackendResponse(result));
       setLastResult({ status: "success", time });

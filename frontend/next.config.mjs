@@ -1,7 +1,17 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    // Must be false so build fails on TS errors (CI/CD safety)
+    ignoreBuildErrors: false,
+  },
+  turbopack: {
+    // Explicit project root prevents wrong root inference in dev.
+    root: __dirname,
   },
   images: {
     unoptimized: true,

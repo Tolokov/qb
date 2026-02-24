@@ -62,36 +62,6 @@ function insertBlockInTree(
   });
 }
 
-function moveBlockInTree(
-  blocks: QueryBlock[],
-  blockId: string,
-  oldIndex: number,
-  newIndex: number
-): QueryBlock[] {
-  const rootIdx = blocks.findIndex((b) => b.id === blockId);
-  if (rootIdx !== -1) {
-    const result = [...blocks];
-    const [item] = result.splice(oldIndex, 0);
-    if (item) {
-      result.splice(newIndex, 0, item);
-    }
-    return result;
-  }
-  return blocks.map((b) => {
-    if (b.children) {
-      const childIdx = b.children.findIndex((c) => c.id === blockId);
-      if (childIdx !== -1) {
-        const children = [...b.children];
-        const [item] = children.splice(oldIndex, 1);
-        if (item) children.splice(newIndex, 0, item);
-        return { ...b, children };
-      }
-      return { ...b, children: moveBlockInTree(b.children, blockId, oldIndex, newIndex) };
-    }
-    return b;
-  });
-}
-
 export function blocksToJson(blocks: QueryBlock[]): object {
   const sources = blocks.filter((b) => b.type === "source");
   const columns = blocks.filter((b) => b.type === "column");
