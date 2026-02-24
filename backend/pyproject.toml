@@ -1,6 +1,6 @@
 [project]
 name = "query-builder-service"
-version = "0.6.0"
+version = "0.7.0"
 description = "FastAPI backend: compile JSON query to Hadoop-compatible SQL"
 requires-python = ">=3.13"
 
