@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.v1.schemas.crud import UserCreate, UserResponse, UserUpdate
 from app.dependencies import get_crud_service
@@ -17,7 +17,7 @@ def get_user(id_value: int, service: CrudService = Depends(get_crud_service)) ->
     return service.get_user(id_value)
 
 
-@router.post("", response_model=UserResponse, status_code=201, summary="Create user")
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="Create user")
 def create_user(body: UserCreate, service: CrudService = Depends(get_crud_service)) -> UserResponse:
     return service.create_user(body)
 
@@ -29,6 +29,6 @@ def update_user(
     return service.update_user(id_value, body)
 
 
-@router.delete("/{id_value}", status_code=204, summary="Delete user")
+@router.delete("/{id_value}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete user")
 def delete_user(id_value: int, service: CrudService = Depends(get_crud_service)) -> None:
     service.delete_user(id_value)

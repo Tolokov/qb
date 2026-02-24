@@ -17,7 +17,7 @@
 | Часть      | Описание |
 |-----------|----------|
 | **frontend** | Веб-интерфейс на Next.js: drag-and-drop редактор запросов, превью (JSON/SQL), история, библиотека блоков. |
-| **backend**  | Сервис на FastAPI: принимает JSON-описание запроса, компилирует в Hadoop-совместимый SQL (см. [backend/app/README.md](backend/app/README.md)). |
+| **backend**  | Сервис на FastAPI: принимает JSON-описание запроса, компилирует в Hadoop-совместимый SQL. |
 
 ---
 
@@ -86,7 +86,6 @@ uvicorn app.main:app --reload
 |----------|----------|
 | [AGENTS.md](AGENTS.md) | Роли агентов в проекте (Product Owner, Backend, Frontend) и когда какую правило подключать. |
 | [CHANGELOG.md](CHANGELOG.md) | История изменений по версиям: что добавлено, изменено и исправлено. |
-| [backend/app/README.md](backend/app/README.md) | Примеры перевода SQL в PySpark (справочник по конвертации). |
 | [backend/docs/SPARK_TABLES.md](backend/docs/SPARK_TABLES.md) | Взаимодействие с таблицами Spark через бекенд (API → Service → Repository). |
 | [backend/docs/SPARK_PYSPARK_VERSIONS.md](backend/docs/SPARK_PYSPARK_VERSIONS.md) | Совместимость версий PySpark и Apache Spark. |
 | [Makefile](Makefile) | Цели для сборки и запуска (см. также [раздел выше](#сборка-и-запуск-makefile)). |

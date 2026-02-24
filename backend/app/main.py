@@ -35,7 +35,6 @@ def create_app() -> FastAPI:
         include_in_schema=False,
     )
     def _chrome_devtools_well_known() -> dict:
-        """Тихий ответ для Chrome DevTools — убирает 404 из логов."""
         return {}
 
     return app

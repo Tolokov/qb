@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.v1.schemas.crud import OrderCreate, OrderResponse, OrderUpdate
 from app.dependencies import get_crud_service
@@ -17,7 +17,7 @@ def get_order(id_value: int, service: CrudService = Depends(get_crud_service)) -
     return service.get_order(id_value)
 
 
-@router.post("", response_model=OrderResponse, status_code=201, summary="Create order")
+@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED, summary="Create order")
 def create_order(body: OrderCreate, service: CrudService = Depends(get_crud_service)) -> OrderResponse:
     return service.create_order(body)
 
@@ -29,6 +29,6 @@ def update_order(
     return service.update_order(id_value, body)
 
 
-@router.delete("/{id_value}", status_code=204, summary="Delete order")
+@router.delete("/{id_value}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete order")
 def delete_order(id_value: int, service: CrudService = Depends(get_crud_service)) -> None:
     service.delete_order(id_value)

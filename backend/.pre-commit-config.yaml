@@ -22,13 +22,13 @@ repos:
     rev: v3.20.0
     hooks:
       - id: pyupgrade
-        args: [ "--py310-plus" ]
+        args: [ "--py313-plus" ]
 
   - repo: https://github.com/psf/black
     rev: 25.11.0
     hooks:
       - id: black
-        language_version: python3.10
+        language_version: python3
         args: [ --line-length=110,  ]
         exclude: tests/(test_repository|test_api)\.py$
 

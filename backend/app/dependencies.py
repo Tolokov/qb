@@ -1,7 +1,7 @@
 import logging
 from functools import lru_cache
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from app.repositories.echo_repository import EchoQueryRepository
 from app.repositories.spark_repository import SparkRepository
@@ -28,7 +28,9 @@ def get_spark_repository() -> SparkRepository:
         spark = get_spark_session()
     except Exception as e:  # pragma: no cover - environment-specific failures
         logger.error("Spark/JVM unavailable for CRUD: %s", e, exc_info=False)
-        raise HTTPException(status_code=503, detail="Spark/JVM unavailable") from e
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Spark/JVM unavailable"
+        ) from e
     return SparkRepository(spark=spark)
 
 

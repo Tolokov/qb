@@ -1,8 +1,8 @@
-# SQL Query Builder — запуск фронтенда и бекенда
+# SQL Query Builder — Конвертор запросов SQL в формат Spark SQL
 
 .PHONY: frontend backend run setup setup-frontend setup-backend ensure-backend help
 
-# Порты (для справки)
+# Зарезервированные константы окружения
 FRONTEND_PORT ?= 3000
 BACKEND_PORT ?= 8000
 SPARK_WAREHOUSE_DIR ?= $(CURDIR)/defaultLakehouse

@@ -2,12 +2,12 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from app.exceptions import DuplicateIdError
+from pydantic_core import PydanticCustomError
+
 from app.repositories.spark_repository import TABLE_SCHEMAS
 
 
 def _row_to_response(row: dict[str, Any]) -> dict[str, Any]:
-    """Convert row to JSON-safe types (datetime -> str, Decimal -> float)."""
     out: dict[str, Any] = {}
     for k, v in row.items():
         if v is None:
@@ -22,8 +22,6 @@ def _row_to_response(row: dict[str, Any]) -> dict[str, Any]:
 
 
 class FakeSparkRepository:
-    """CRUD in memory; same interface as SparkRepository."""
-
     def __init__(self) -> None:
         self._data: dict[str, list[dict[str, Any]]] = {
             "users": [],
@@ -48,7 +46,7 @@ class FakeSparkRepository:
         if table_name not in TABLE_SCHEMAS:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
         if "id" in row and self.get_by_id(table_name, row["id"]) is not None:
-            raise DuplicateIdError(f"Row with id {row['id']} already exists")
+            raise PydanticCustomError("duplicate_id", "Row with id {id} already exists", {"id": row["id"]})
         out = dict(row)
         self._data[table_name].append(out)
         return _row_to_response(out)

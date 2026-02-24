@@ -1,16 +1,16 @@
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
+from pydantic_core import PydanticCustomError
 from pyspark.sql import SparkSession
 from pyspark.sql import types as T
 from pyspark.sql.functions import col
 
-from app.exceptions import DuplicateIdError
 from app.spark_tables import (
-    USERS_SCHEMA,
     ORDERS_SCHEMA,
     PRODUCTS_SCHEMA,
+    USERS_SCHEMA,
     create_tables_and_view,
 )
 
@@ -66,7 +66,6 @@ class SparkRepository:
         create_tables_and_view(spark)
 
     def list_table(self, table_name: str) -> list[dict[str, Any]]:
-        """List all rows in table. Returns list of JSON-serializable dicts."""
         if table_name not in TABLE_SCHEMAS:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
         df = self._spark.table(table_name)
@@ -74,7 +73,6 @@ class SparkRepository:
         return [_row_to_json(r) for r in rows]
 
     def get_by_id(self, table_name: str, id_value: int) -> dict[str, Any] | None:
-        """Get a single row by id. Returns None if not found."""
         if table_name not in TABLE_SCHEMAS:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
         df = self._spark.table(table_name).filter(col("id") == id_value)
@@ -84,19 +82,17 @@ class SparkRepository:
         return _row_to_json(rows[0])
 
     def create(self, table_name: str, row: dict[str, Any]) -> dict[str, Any]:
-        """Append one row to the table. Returns the created row (with id)."""
         schema = TABLE_SCHEMAS.get(table_name)
         if not schema:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
         if "id" in row and self.get_by_id(table_name, row["id"]) is not None:
-            raise DuplicateIdError(f"Row with id {row['id']} already exists")
+            raise PydanticCustomError("duplicate_id", "Row with id {id} already exists", {"id": row["id"]})
         row = _row_for_spark(row, schema)
         new_df = self._spark.createDataFrame([row], schema)
         new_df.write.mode("append").saveAsTable(table_name)
         return _row_to_json(new_df.collect()[0])
 
     def update(self, table_name: str, id_value: int, row: dict[str, Any]) -> dict[str, Any] | None:
-        """Update row with given id. Overwrites table. Returns updated row or None."""
         schema = TABLE_SCHEMAS.get(table_name)
         if not schema:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
@@ -112,7 +108,6 @@ class SparkRepository:
         return _row_to_json(updated_row.collect()[0])
 
     def delete(self, table_name: str, id_value: int) -> bool:
-        """Delete row with given id. Returns True if deleted, False if not found."""
         if table_name not in TABLE_SCHEMAS:
             raise ValueError(f"Unknown table: {table_name}. Allowed: {list(TABLE_SCHEMAS)}")
         df = self._spark.table(table_name)

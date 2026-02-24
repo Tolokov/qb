@@ -69,6 +69,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.ruff_cache/
 
 # Translations
 *.mo
@@ -135,8 +136,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# VSCODE IDE
+# IDE
 .vscode
-
-#Pycharm IDE
 .idea

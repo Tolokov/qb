@@ -4,10 +4,6 @@ from decimal import Decimal
 from pyspark.sql import SparkSession
 from pyspark.sql import types as T
 
-# ---------------------------------------------------------------------------
-# Table schemas (5 columns each: int, string, timestamp, decimal, boolean)
-# ---------------------------------------------------------------------------
-
 USERS_SCHEMA = T.StructType(
     [
         T.StructField("id", T.IntegerType(), False),
@@ -70,9 +66,7 @@ def _seed_if_empty(spark: SparkSession) -> None:
             (2, "Gadget", Decimal("29.99"), base, True),
             (3, "Gizmo", Decimal("5.50"), base, False),
         ]
-        spark.createDataFrame(products_data, PRODUCTS_SCHEMA).write.mode("append").saveAsTable(
-            "products"
-        )
+        spark.createDataFrame(products_data, PRODUCTS_SCHEMA).write.mode("append").saveAsTable("products")
 
 
 def create_tables_and_view(spark: SparkSession) -> None:

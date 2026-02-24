@@ -27,7 +27,10 @@ _COMPILE_BODY_EXAMPLE = {
     "/query/compile",
     response_model=QueryResponse,
     summary="Эхо JSON",
-    description="Принимает любой валидный JSON; при body={'payload': ...} используется payload (обратная совместимость).",
+    description=(
+        "Принимает любой валидный JSON; при body={'payload': ...} "
+        "используется payload (обратная совместимость)."
+    ),
 )
 async def compile_query_route(
     request: Request,
@@ -59,9 +62,6 @@ async def compile_query_route(
     ),
     service: QueryService = Depends(get_query_service),
 ) -> QueryResponse:
-    # Differentiate explicit JSON null from missing body:
-    # - missing body -> {}
-    # - explicit null -> None
     if body is None and not await request.body():
         body = {}
     data = _extract_payload(body)

@@ -3,10 +3,6 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-# ---------------------------------------------------------------------------
-# Users (id, name, created_at, score, active)
-# ---------------------------------------------------------------------------
-
 
 class UserCreate(BaseModel):
     id: int
@@ -31,11 +27,6 @@ class UserResponse(BaseModel):
     active: bool | None = None
 
 
-# ---------------------------------------------------------------------------
-# Orders (id, user_id, notes, total, completed)
-# ---------------------------------------------------------------------------
-
-
 class OrderCreate(BaseModel):
     id: int
     user_id: int | None = None
@@ -57,11 +48,6 @@ class OrderResponse(BaseModel):
     notes: str | None = None
     total: float | None = None
     completed: bool | None = None
-
-
-# ---------------------------------------------------------------------------
-# Products (id, name, price, created_at, in_stock)
-# ---------------------------------------------------------------------------
 
 
 class ProductCreate(BaseModel):

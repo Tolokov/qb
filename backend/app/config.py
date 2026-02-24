@@ -6,7 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_TITLE: str = "Query Builder Service"
-    APP_DESC: str = "Принимает декларативное JSON-описание запроса и компилирует его в Hadoop-совместимый SQL."
+    APP_DESC: str = (
+        "Принимает декларативное JSON-описание запроса и компилирует его в Hadoop-совместимый SQL."
+    )
     APP_VERSION: str = Field(default="0.1.0", alias="version")
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
@@ -20,7 +22,6 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 60
     rate_limit_window_sec: int = 60
     sql_injection_patterns: tuple[str, ...] = ()
-    # Spark: used by CRUD / SparkRepository (local mode by default)
     SPARK_MASTER: str = "local[*]"
     SPARK_WAREHOUSE_DIR: str = "defaultLakehouse"
     model_config = SettingsConfigDict(

@@ -40,9 +40,7 @@ def test_compile_response_includes_sql_when_repo_provides_it(app, client):
         def execute(self, payload) -> dict:
             return {"echo": payload, "sql": "SELECT * FROM users"}
 
-    app.dependency_overrides[get_query_service] = lambda: QueryService(
-        repository=EchoAndSqlRepository()
-    )
+    app.dependency_overrides[get_query_service] = lambda: QueryService(repository=EchoAndSqlRepository())
     try:
         payload = payload_simple()
         response = client.post(COMPILE_URL, json={"payload": payload})
@@ -72,7 +70,17 @@ def test_compile_response_includes_sql_when_repo_provides_it(app, client):
         ([], []),
         ({}, {}),
     ],
-    ids=["object", "array", "string", "int", "float", "bool_true", "bool_false", "empty_array", "empty_object"],
+    ids=[
+        "object",
+        "array",
+        "string",
+        "int",
+        "float",
+        "bool_true",
+        "bool_false",
+        "empty_array",
+        "empty_object",
+    ],
 )
 def test_compile_accepts_any_json_type(client, body, expected_echo):
     """POST /query/compile accepts any valid JSON type and echoes it."""
