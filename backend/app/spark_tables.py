@@ -1,5 +1,7 @@
+import shutil
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 
 from pyspark.sql import SparkSession
 from pyspark.sql import types as T
@@ -39,9 +41,14 @@ VIEW_NAME = "user_orders_mart"
 
 
 def _ensure_table(spark: SparkSession, table_name: str, schema: T.StructType) -> None:
-    if table_name not in [t.name for t in spark.catalog.listTables()]:
-        empty = spark.createDataFrame([], schema)
-        empty.write.saveAsTable(table_name, mode="overwrite")
+    if table_name in [t.name for t in spark.catalog.listTables()]:
+        return
+    # Remove orphaned filesystem location (exists on disk but not in Hive catalog).
+    warehouse = spark.conf.get("spark.sql.warehouse.dir", ".").removeprefix("file:")
+    location = Path(warehouse) / table_name
+    if location.exists():
+        shutil.rmtree(location)
+    spark.createDataFrame([], schema).write.saveAsTable(table_name)
 
 
 def _seed_if_empty(spark: SparkSession) -> None:
