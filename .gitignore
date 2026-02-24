@@ -3,7 +3,9 @@ backend/venv/
 backend/.venv/
 backend/__pycache__/
 backend/defaultLakehouse/
+defaultLakehouse/
 backend/metastore_db/
+metastore_db/
 frontend/node_modules/
 
 
