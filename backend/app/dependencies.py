@@ -26,12 +26,14 @@ def get_spark_repository() -> SparkRepository:
     """Return Spark-backed repository or fail with 503 if Spark is unavailable."""
     try:
         spark = get_spark_session()
+        return SparkRepository(spark=spark)
+    except HTTPException:
+        raise
     except Exception as e:  # pragma: no cover - environment-specific failures
         logger.error("Spark/JVM unavailable for CRUD: %s", e, exc_info=False)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Spark/JVM unavailable"
         ) from e
-    return SparkRepository(spark=spark)
 
 
 def get_crud_service() -> CrudService:
