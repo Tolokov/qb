@@ -10,6 +10,39 @@ _Ещё не в релизе._
 
 ---
 
+## [0.6.0]
+
+### Добавлено
+- CRUD API для Spark-таблиц: users, orders, products (GET/POST/PUT/DELETE).
+- Healthcheck `GET /api/v1/health`: проверка бекенда, фронтенда и Spark-сессии.
+- `make pre` — запуск pre-commit + pytest из корня проекта.
+- Схемы `ComponentHealth`, `HealthResponse` для healthcheck-ответа.
+- Глобальная обработка Spark-ошибок через `_repo_call` в `CrudService` (HTTP 503).
+- Автовосстановление при рассинхроне метастора и файловой системы Spark.
+
+### Изменено
+- Все HTTP-статус-коды заменены на константы `fastapi.status`.
+- `DuplicateIdError` заменён на `pydantic_core.PydanticCustomError`.
+- `routes/backend.py` переименован в `routes/health.py`; тег Swagger `Backend` → `Health`.
+- `routes/query.py` получил тег Swagger `Query` (было `default`).
+- Healthcheck возвращает `"No errors"` вместо `null` при отсутствии проблем.
+- `CrudService` рефакторинг: 15 разрозненных try/except заменены на `_repo_call`.
+- `pre-commit`: Python 3.10 → 3.13, ruff-настройки перенесены в `[tool.ruff.lint]`.
+
+### Удалено
+- `memory_repository.py` и вся in-memory реализация.
+- `exceptions.py` (`DuplicateIdError`).
+- `Dockerfile`, `.dockerignore`.
+- Неиспользуемая модель `QueryRequest` из `schemas/query.py`.
+- Неиспользуемые импорты `ABC`, `abstractmethod`, `Query`, `Condition` из `services/base.py`.
+
+### Исправлено
+- Неотловленный HTTP 500 при обращении к удалённой/недоступной Spark-таблице.
+- `LOCATION_ALREADY_EXISTS` при старте после сброса метастора Hive.
+- `SparkRepository.__init__` вынесен внутрь `try/except` в `get_spark_repository`.
+
+---
+
 ## [0.5.0]
 
 - Локализация en/ru, переключатель в шапке, переводы и валидация.
