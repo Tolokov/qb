@@ -35,7 +35,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { CATEGORY_COLORS, type QueryBlock } from "@/lib/types";
 import { useQueryStore } from "@/lib/query-store";
+import { NAMESPACE_VITRINAS } from "@/lib/components-catalog";
 import type { ValidationError } from "@/lib/validation";
+import { TRANSLATIONS } from "@/lib/translations";
+import { useLocale } from "@/hooks/use-locale";
 
 /** Карта иконок по имени (как в библиотеке компонентов) */
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -261,6 +264,8 @@ function ConfigInputs({
   onUpdate: (key: string, value: unknown) => void;
   errors: ValidationError[];
 }) {
+  const { locale } = useLocale();
+  const t = TRANSLATIONS[locale];
   const isColumnBlock = block.type === "column";
   const baseInputClass =
     "bg-card/80 border-border/60 font-mono focus-visible:ring-1 focus-visible:ring-primary/30 placeholder:text-muted-foreground/50";
@@ -275,6 +280,42 @@ function ConfigInputs({
 
   switch (block.type) {
     case "source": {
+      const namespace = block.config.namespace as string | undefined;
+      if (namespace) {
+        const vitrinas = NAMESPACE_VITRINAS[namespace] ?? [];
+        const currentVitrina = String(block.config.vitrina || "");
+        const vitrinaEmpty = currentVitrina === "";
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 w-fit">
+              {namespace}
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1">
+                <Select
+                  value={currentVitrina}
+                  onValueChange={(v) => {
+                    onUpdate("vitrina", v);
+                    onUpdate("table", `${namespace}.${v}`);
+                  }}
+                >
+                  <SelectTrigger className={`h-7 w-44 text-xs font-mono bg-card/80 border-border/60 rounded-lg [&_[data-placeholder]]:italic [&_[data-placeholder]]:text-muted-foreground/60 ${vitrinaEmpty ? "border-destructive" : ""}`}>
+                    <SelectValue placeholder={t.selectVitrina} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vitrinas.map((v) => (
+                      <SelectItem key={v} value={v} className="text-xs font-mono">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {vitrinaEmpty && REQUIRED_MARKER}
+              </div>
+            </div>
+          </div>
+        );
+      }
       const tableEmpty = isEmpty(block.config.table);
       return (
         <div className="flex flex-col gap-0.5">

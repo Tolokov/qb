@@ -4,6 +4,7 @@ from functools import lru_cache
 from fastapi import HTTPException, status
 
 from app.repositories.echo_repository import EchoQueryRepository
+from app.repositories.ibis_repository import IbisRepository
 from app.repositories.spark_repository import SparkRepository
 from app.services.crud_service import CrudService
 from app.services.query_service import QueryService
@@ -17,8 +18,23 @@ def get_query_repository() -> EchoQueryRepository:
     return EchoQueryRepository()
 
 
+@lru_cache
+def get_ibis_repository() -> IbisRepository:
+    """Return Ibis-backed repository or fail with 503 if Spark is unavailable."""
+    try:
+        spark = get_spark_session()
+        return IbisRepository(spark=spark)
+    except HTTPException:
+        raise
+    except Exception as e:  # pragma: no cover - environment-specific failures
+        logger.error("Ibis/Spark unavailable: %s", e, exc_info=False)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Ibis/Spark unavailable"
+        ) from e
+
+
 def get_query_service() -> QueryService:
-    return QueryService(repository=get_query_repository())
+    return QueryService(repository=get_ibis_repository())
 
 
 @lru_cache

@@ -39,16 +39,14 @@ export default function PreviewPanel() {
   const hasHistoryEntryWithSameJson = useQueryStore((s) => s.hasHistoryEntryWithSameJson);
   const { toast } = useToast();
 
+  const setBackendResult = useQueryStore((s) => s.setBackendResult);
+  const clearBackendResult = useQueryStore((s) => s.clearBackendResult);
+  const lastRunStatus = useQueryStore((s) => s.lastRunStatus);
+  const lastRunTime = useQueryStore((s) => s.lastRunTime);
+
   const [copiedJson, setCopiedJson] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
-  const [copiedBackendSql, setCopiedBackendSql] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [lastResult, setLastResult] = useState<{
-    status: "success" | "error";
-    time: number;
-  } | null>(null);
-  const [backendResponse, setBackendResponse] = useState<string | null>(null);
-  const [backendError, setBackendError] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
 
   const jsonOutput = useMemo(() => {
@@ -101,9 +99,7 @@ export default function PreviewPanel() {
 
     setValidationErrors([]);
     setIsRunning(true);
-    setLastResult(null);
-    setBackendResponse(null);
-    setBackendError(null);
+    clearBackendResult();
     setCopyError(null);
     const start = Date.now();
 
@@ -114,8 +110,7 @@ export default function PreviewPanel() {
       }
       const result = await compileRawJsonOnBackend(json);
       const time = Date.now() - start;
-      setBackendResponse(formatBackendResponse(result));
-      setLastResult({ status: "success", time });
+      setBackendResult(formatBackendResponse(result), null, time, "success");
 
       const wasFromTemplate = lastAppliedFromTemplate;
       setLastAppliedFromTemplate(false);
@@ -142,12 +137,11 @@ export default function PreviewPanel() {
           : typeof err === "object" && err !== null && "message" in err
             ? String((err as { message: unknown }).message)
             : String(err);
-      setBackendError(message || t.unknownError);
-      setLastResult({ status: "error", time });
+      setBackendResult(null, message || t.unknownError, time, "error");
     } finally {
       setIsRunning(false);
     }
-  }, [blocks, locale, t, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast, lastAppliedFromTemplate, setLastAppliedFromTemplate, hasHistoryEntryWithSameJson]);
+  }, [blocks, locale, t, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast, lastAppliedFromTemplate, setLastAppliedFromTemplate, hasHistoryEntryWithSameJson, setBackendResult, clearBackendResult]);
 
   return (
     <div className="flex h-full flex-col bg-card">
@@ -175,17 +169,17 @@ export default function PreviewPanel() {
         </Button>
       </div>
 
-      {lastResult && lastResult.status === "success" && (
+      {lastRunStatus === "success" && lastRunTime !== null && (
         <div className={cn("flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-success/10 text-success", locale === "braille" && "font-braille")}>
           <div className="h-1.5 w-1.5 rounded-full bg-success" />
           <span className="font-medium">{t.backendResponseReceived}</span>
           <span className="ml-auto flex items-center gap-1 opacity-60">
             <Clock className="h-3 w-3" />
-            {lastResult.time}ms
+            {lastRunTime}ms
           </span>
         </div>
       )}
-      {lastResult && lastResult.status === "error" && (
+      {lastRunStatus === "error" && (
         <div className={cn("flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-destructive/10 text-destructive", locale === "braille" && "font-braille")}>
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           <span className="font-medium">{t.backendRequestError}</span>
@@ -193,66 +187,6 @@ export default function PreviewPanel() {
       )}
 
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-        {backendResponse && (
-          <div className={cn("border-b border-border px-4 py-3 bg-muted/30 shrink-0", locale === "braille" && "font-braille")}>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {t.backendResponseLabel}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-[11px] rounded-lg shrink-0"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(backendResponse);
-                  setCopiedBackendSql(true);
-                  setTimeout(() => setCopiedBackendSql(false), 2000);
-                }}
-              >
-                {copiedBackendSql ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {copiedBackendSql ? t.copiedButton : t.copyButton}
-              </Button>
-            </div>
-            <pre className="p-3 rounded-lg border border-border bg-card text-[12px] font-mono leading-5 text-card-foreground overflow-x-auto overflow-y-auto max-h-[280px] whitespace-pre-wrap break-words">
-              {backendResponse}
-            </pre>
-          </div>
-        )}
-
-        {backendError && (
-          <div className={cn("border-b border-border px-4 py-3 bg-destructive/5 shrink-0", locale === "braille" && "font-braille")}>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-[11px] font-semibold text-destructive uppercase tracking-wider">
-                {t.backendErrorLabel}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-[11px] rounded-lg shrink-0 border-destructive/50 text-destructive hover:bg-destructive/10"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(backendError);
-                  setCopiedBackendSql(true);
-                  setTimeout(() => setCopiedBackendSql(false), 2000);
-                }}
-              >
-                {copiedBackendSql ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {t.copyButton}
-              </Button>
-            </div>
-            <pre className="p-3 rounded-lg border border-destructive/20 bg-card text-[12px] font-mono leading-5 text-destructive overflow-x-auto overflow-y-auto max-h-[280px] whitespace-pre-wrap break-words">
-              {backendError}
-            </pre>
-          </div>
-        )}
-
         {copyError && (
           <div className="flex items-center gap-2 px-4 py-2 text-[11px] border-b border-border bg-destructive/10 text-destructive shrink-0">
             <AlertCircle className="h-3.5 w-3.5 shrink-0" />

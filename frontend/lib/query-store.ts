@@ -256,6 +256,10 @@ export interface QueryBuilderState {
   lastAppliedFromTemplate: boolean;
   dragOverContainerId: string | null;
   validationErrors: ValidationError[];
+  backendResponse: string | null;
+  backendError: string | null;
+  lastRunTime: number | null;
+  lastRunStatus: "success" | "error" | null;
 
   addBlock: (item: LibraryItem, parentId?: string) => void;
   removeBlock: (id: string) => void;
@@ -271,6 +275,8 @@ export interface QueryBuilderState {
   setActiveBlockId: (id: string | null) => void;
   setDragOverContainerId: (id: string | null) => void;
   setValidationErrors: (errors: ValidationError[]) => void;
+  setBackendResult: (response: string | null, error: string | null, time: number, status: "success" | "error") => void;
+  clearBackendResult: () => void;
   setShowHistory: (show: boolean) => void;
   setLastAppliedFromTemplate: (value: boolean) => void;
   addHistoryEntry: (entry: QueryHistoryEntry) => void;
@@ -292,6 +298,10 @@ export const useQueryStore = create<QueryBuilderState>()(
       lastAppliedFromTemplate: false,
       dragOverContainerId: null,
       validationErrors: [],
+      backendResponse: null,
+      backendError: null,
+      lastRunTime: null,
+      lastRunStatus: null,
 
       addBlock: (item, parentId) => {
         const newBlock: QueryBlock = {
@@ -303,11 +313,29 @@ export const useQueryStore = create<QueryBuilderState>()(
           children:
             item.type === "subquery" || item.type === "logical" ? [] : undefined,
         };
-        set((state) => ({
-          blocks: parentId
+        set((state) => {
+          const isFirstSource =
+            item.type === "source" &&
+            !parentId &&
+            !state.blocks.some((b) => b.type === "source");
+
+          const newBlocks = parentId
             ? insertBlockInTree(state.blocks, parentId, newBlock)
-            : [...state.blocks, newBlock],
-        }));
+            : [...state.blocks, newBlock];
+
+          if (isFirstSource) {
+            const selectBlock: QueryBlock = {
+              id: generateId(),
+              type: "column",
+              label: "Select Column",
+              icon: "Columns3",
+              config: { column: "*", alias: "" },
+            };
+            return { blocks: [...newBlocks, selectBlock] };
+          }
+
+          return { blocks: newBlocks };
+        });
       },
 
       removeBlock: (id) =>
@@ -396,6 +424,11 @@ export const useQueryStore = create<QueryBuilderState>()(
       setActiveBlockId: (id) => set({ activeBlockId: id }),
       setDragOverContainerId: (id) => set({ dragOverContainerId: id }),
       setValidationErrors: (errors) => set({ validationErrors: errors }),
+
+      setBackendResult: (response, error, time, status) =>
+        set({ backendResponse: response, backendError: error, lastRunTime: time, lastRunStatus: status }),
+      clearBackendResult: () =>
+        set({ backendResponse: null, backendError: null, lastRunTime: null, lastRunStatus: null }),
 
       setShowHistory: (show) => set({ showHistory: show }),
       setLastAppliedFromTemplate: (value) =>

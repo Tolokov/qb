@@ -1,5 +1,6 @@
+import random
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -152,6 +153,127 @@ TRACKING_ALL_SCHEMA = T.StructType(
 )
 
 _ADVERT_DATABASES = ("prd_advert_ods", "prd_advert_dict", "advert_dm", "pixel")
+
+# --- bulk-seed data pools (module-level, seeded for reproducibility) ---
+_POOL_RNG = random.Random(42)
+_USERS = [f"usr_{i:04d}" for i in range(1, 201)]
+_MSISDNS = [f"7{_POOL_RNG.randint(9000000000, 9999999999)}" for _ in range(500)]
+_OPERATORS = ["МТС", "Билайн", "МегаФон", "Теле2", "Ростелеком"]
+_CITIES_POOL = [
+    "Москва",
+    "Санкт-Петербург",
+    "Екатеринбург",
+    "Краснодар",
+    "Новосибирск",
+    "Казань",
+    "Нижний Новгород",
+    "Челябинск",
+    "Омск",
+    "Самара",
+    "Ростов-на-Дону",
+    "Уфа",
+    "Красноярск",
+    "Пермь",
+    "Воронеж",
+]
+_RUBRICS = [
+    "Рестораны",
+    "Автосервисы",
+    "Салоны красоты",
+    "Банки",
+    "Аптеки",
+    "Магазины",
+    "Гостиницы",
+    "Кафе",
+    "Больницы",
+    "Школы",
+    "Супермаркеты",
+    "Кинотеатры",
+    "Стоматологии",
+    "Фитнес-клубы",
+]
+_SEGMENTS_POOL = [
+    "auto",
+    "travel",
+    "gaming",
+    "tech",
+    "sport",
+    "food",
+    "retail",
+    "finance",
+    "health",
+    "education",
+    "media",
+    "fashion",
+]
+_FEDERAL_DISTRICTS = [
+    "Центральный",
+    "Северо-Западный",
+    "Уральский",
+    "Южный",
+    "Приволжский",
+    "Сибирский",
+    "Дальневосточный",
+    "Северо-Кавказский",
+]
+_CATEGORIES = [
+    "Авто",
+    "Туризм",
+    "Развлечения",
+    "Спорт",
+    "Электроника",
+    "Мода",
+    "Финансы",
+    "Здоровье",
+    "Образование",
+    "Медиа",
+]
+_URLS = [
+    "https://example.ru/поиск",
+    "https://news.ru/статья",
+    "https://shop.ru/товары",
+    "https://catalog.ru/категория",
+    "https://market.ru/предложения",
+] + [f"https://site{i}.ru/страница" for i in range(1, 46)]
+_USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT)",
+    "Mozilla/5.0 (Android)",
+    "Mozilla/5.0 (iPhone)",
+    "Googlebot/2.1",
+    "YandexBot/3.0",
+    "Mozilla/5.0 (Linux)",
+    "Mozilla/5.0 (Macintosh)",
+]
+_SOURCES = ["CRM", "CDP", "manual", "API", "import"]
+_STATUSES = ["success", "failed", "pending"]
+_PAGE_URLS = [f"https://shop.example.ru/product/{i}" for i in range(1, 31)] + [
+    "https://shop.example.ru/cart",
+    "https://shop.example.ru/checkout",
+    "https://shop.example.ru/thanks",
+    "https://shop.example.ru/catalog",
+]
+_SEGMENT_NAMES = [
+    "Авто-энтузиасты",
+    "Путешественники",
+    "Геймеры",
+    "Спортсмены",
+    "Технари",
+    "Модники",
+    "Финансисты",
+    "Гурманы",
+    "Читатели",
+    "Туристы",
+    "Покупатели",
+    "Меломаны",
+    "Кулинары",
+    "Программисты",
+    "Бизнесмены",
+    "Родители",
+    "Студенты",
+    "Пенсионеры",
+    "Дачники",
+    "Путники",
+]
 
 
 def _ensure_table(spark: SparkSession, table_name: str, schema: T.StructType) -> None:
@@ -395,6 +517,166 @@ def _seed_advert_tables_if_empty(spark: SparkSession) -> None:
         ).write.mode("append").saveAsTable("pixel.tracking_all")
 
 
+def _bulk_seed_advert_tables(spark: SparkSession) -> None:
+    """Append 10,000 rows to each advert table. Skipped if already seeded (count >= 1000)."""
+    if spark.table("prd_advert_ods.dsp_events").count() >= 1000:
+        return
+
+    rng = random.Random(42)
+    base_ts = datetime(2024, 1, 1)
+    two_years_sec = 2 * 365 * 24 * 3600
+
+    def _ts() -> datetime:
+        return base_ts + timedelta(seconds=rng.randint(0, two_years_sec))
+
+    # 1. prd_advert_ods.dsp_events  (event_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (
+                6 + i,
+                rng.choice(_USERS),
+                _ts(),
+                Decimal(str(round(rng.uniform(0.001, 9.9999), 4))),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        DSP_EVENTS_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_ods.dsp_events")
+
+    # 2. prd_advert_dict.v_segments_ref  (segment_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (6 + i, rng.choice(_SEGMENT_NAMES), rng.choice(_CATEGORIES), rng.choice([True, False]), _ts())
+            for i in range(10000)
+        ],
+        V_SEGMENTS_REF_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_dict.v_segments_ref")
+
+    # 3. prd_advert_ods.sgm_upload_dsp_segment  (upload_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (6 + i, rng.randint(1, 10000), rng.choice(_MSISDNS), _ts(), rng.choice(_STATUSES))
+            for i in range(10000)
+        ],
+        SGM_UPLOAD_DSP_SEGMENT_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_ods.sgm_upload_dsp_segment")
+
+    # 4. prd_advert_ods.http_cyrillic  (request_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (6 + i, rng.choice(_URLS), rng.choice(_USER_AGENTS), _ts(), rng.choice([True, False]))
+            for i in range(10000)
+        ],
+        HTTP_CYRILLIC_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_ods.http_cyrillic")
+
+    # 5. prd_advert_dict.v_catalog_2gis_phones  (phone_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (
+                6 + i,
+                f"+7{rng.randint(9000000000, 9999999999)}",
+                rng.choice(_RUBRICS),
+                rng.choice(_CITIES_POOL),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        V_CATALOG_2GIS_PHONES_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_dict.v_catalog_2gis_phones")
+
+    # 6. prd_advert_dict.v_region_gibdd_codes  (region_code: 100–10099, fictional)
+    spark.createDataFrame(
+        [
+            (
+                100 + i,
+                f"Регион_{100 + i}",
+                rng.choice(_FEDERAL_DISTRICTS),
+                str(100 + i),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        V_REGION_GIBDD_CODES_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_dict.v_region_gibdd_codes")
+
+    # 7. prd_advert_dict.v_cities_regions  (city_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (
+                6 + i,
+                rng.choice(_CITIES_POOL),
+                rng.choice(_CITIES_POOL),
+                rng.randint(10000, 15000000),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        V_CITIES_REGIONS_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_dict.v_cities_regions")
+
+    # 8. prd_advert_ods.imsi_x_msisdn_actual  (imsi: unique string)
+    spark.createDataFrame(
+        [
+            (
+                f"IMSI{10001 + i:012d}",
+                rng.choice(_MSISDNS),
+                rng.choice(_OPERATORS),
+                _ts(),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        IMSI_X_MSISDN_ACTUAL_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_ods.imsi_x_msisdn_actual")
+
+    # 9. advert_dm.segments_bd_custom  (segment_id: 6–10005)
+    spark.createDataFrame(
+        [
+            (
+                6 + i,
+                rng.choice(_USERS),
+                rng.sample(_SEGMENTS_POOL, rng.randint(1, 4)),
+                Decimal(str(round(rng.uniform(0.01, 99.99), 2))),
+                _ts(),
+            )
+            for i in range(10000)
+        ],
+        SEGMENTS_BD_CUSTOM_SCHEMA,
+    ).write.mode("append").saveAsTable("advert_dm.segments_bd_custom")
+
+    # 10. prd_advert_ods.cm_id_msisdn  (cm_id: unique string)
+    spark.createDataFrame(
+        [
+            (
+                f"cm_{10001 + i:010d}",
+                rng.choice(_MSISDNS),
+                rng.choice(_SOURCES),
+                _ts(),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        CM_ID_MSISDN_SCHEMA,
+    ).write.mode("append").saveAsTable("prd_advert_ods.cm_id_msisdn")
+
+    # 11. pixel.tracking_all  (pixel_id: unique string)
+    spark.createDataFrame(
+        [
+            (
+                f"pxl_{10001 + i:010d}",
+                rng.choice(_USERS),
+                rng.choice(_PAGE_URLS),
+                _ts(),
+                rng.choice([True, False]),
+            )
+            for i in range(10000)
+        ],
+        TRACKING_ALL_SCHEMA,
+    ).write.mode("append").saveAsTable("pixel.tracking_all")
+
+
 def create_advert_databases_and_tables(spark: SparkSession) -> None:
     for db in _ADVERT_DATABASES:
         spark.sql(f"CREATE DATABASE IF NOT EXISTS {db}")
@@ -412,6 +694,7 @@ def create_advert_databases_and_tables(spark: SparkSession) -> None:
     _ensure_table_ns(spark, "pixel", "tracking_all", TRACKING_ALL_SCHEMA)
 
     _seed_advert_tables_if_empty(spark)
+    _bulk_seed_advert_tables(spark)
 
 
 def create_tables_and_view(spark: SparkSession) -> None:

@@ -63,6 +63,11 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 function DraggableItem({ item }: { item: LibraryItem }) {
   const addBlock = useQueryStore((s) => s.addBlock);
+  const blocks = useQueryStore((s) => s.blocks);
+  const hasSourceSelected = blocks.some((b) => b.type === "source" && b.config.table);
+  const isSource = item.type === "source";
+  const locked = !isSource && !hasSourceSelected;
+
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: `library-${item.id}`,
@@ -85,31 +90,44 @@ function DraggableItem({ item }: { item: LibraryItem }) {
   };
 
   const onRowDoubleClick = (e: React.MouseEvent) => {
+    if (locked) return;
     if ((e.target as HTMLElement).closest?.("button")) return;
     addToCanvas(e);
   };
 
+  const dragProps = locked ? {} : { ...listeners, ...attributes };
+
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      {...dragProps}
       style={style}
       onDoubleClick={onRowDoubleClick}
-      className={`group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px] cursor-grab active:cursor-grabbing select-none transition-all duration-150 ${colors.bg} ${colors.border} ${colors.text} ${isDragging ? "opacity-0 pointer-events-none" : "hover:shadow-sm hover:translate-x-0.5"}`}
+      className={cn(
+        "group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[12px] select-none transition-all duration-150",
+        colors.bg, colors.border, colors.text,
+        locked
+          ? "opacity-50 cursor-not-allowed"
+          : "cursor-grab active:cursor-grabbing hover:shadow-sm hover:translate-x-0.5",
+        isDragging && "opacity-0 pointer-events-none",
+      )}
     >
       <GripVertical className="h-3 w-3 opacity-0 group-hover:opacity-30 transition-opacity shrink-0" />
       <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
       <span className="font-medium truncate flex-1 min-w-0">{item.label}</span>
-      <button
-        type="button"
-        onClick={addToCanvas}
-        onPointerDown={(e) => e.stopPropagation()}
-        className="opacity-0 group-hover:opacity-70 hover:opacity-100 w-[10%] min-w-8 h-6 rounded hover:bg-foreground/10 transition-opacity shrink-0 touch-manipulation flex items-center justify-center outline-none focus:outline-none focus-visible:outline-none"
-        aria-label={`Добавить ${item.label} на канвас`}
-      >
-        <ArrowRightFromLine className="h-3.5 w-3.5 text-muted-foreground" />
-      </button>
+      {locked ? (
+        <Ban className="h-3.5 w-3.5 text-destructive opacity-70 shrink-0" />
+      ) : (
+        <button
+          type="button"
+          onClick={addToCanvas}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="opacity-0 group-hover:opacity-70 hover:opacity-100 w-[10%] min-w-8 h-6 rounded hover:bg-foreground/10 transition-opacity shrink-0 touch-manipulation flex items-center justify-center outline-none focus:outline-none focus-visible:outline-none"
+          aria-label={`Добавить ${item.label} на канвас`}
+        >
+          <ArrowRightFromLine className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      )}
     </div>
   );
 }

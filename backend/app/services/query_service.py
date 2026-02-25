@@ -29,7 +29,15 @@ class QueryService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
             ) from e
 
-        return self._repository.execute(payload)
+        try:
+            return self._repository.execute(payload)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error("Repository execution error: %s", e, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Query execution failed"
+            ) from e
 
     def _validate_payload_type(self, payload: object) -> None:
         allowed = (dict, list, str, int, float, bool, type(None))

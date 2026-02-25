@@ -1,4 +1,5 @@
 # Backend (Python): venv, cache, .env — дублировать в backend/.gitignore не нужно
+logs/
 backend/venv/
 backend/.venv/
 backend/__pycache__/

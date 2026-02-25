@@ -23,6 +23,7 @@ import SidebarLibrary from "@/components/query-builder/sidebar-library";
 import BuilderCanvas from "@/components/query-builder/builder-canvas";
 import PreviewPanel from "@/components/query-builder/preview-panel";
 import HistoryPanel from "@/components/query-builder/history-panel";
+import BackendResponsePanel from "@/components/query-builder/backend-response-panel";
 import { useQueryStore } from "@/lib/query-store";
 import type { LibraryItem } from "@/lib/types";
 import { CATEGORY_COLORS } from "@/lib/types";
@@ -216,16 +217,16 @@ export default function QueryBuilderPage() {
             className={`relative shrink-0 w-px bg-border hover:bg-primary/20 transition-colors cursor-col-resize flex items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 ${draggedItem || draggedBlockId ? "pointer-events-none" : ""}`}
           />
 
-          <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 bg-background">
+          <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 min-w-0 bg-background">
             <ResizablePanel defaultSize={72} minSize={60}>
-              <BuilderCanvas />
+              <div className="flex flex-col h-full min-h-0">
+                <div className="flex-1 min-h-0">
+                  <BuilderCanvas />
+                </div>
+                <BackendResponsePanel />
+              </div>
             </ResizablePanel>
-
-            <ResizableHandle
-              disabled={!!(draggedItem || draggedBlockId)}
-              className="w-px bg-border hover:bg-primary/20 transition-colors"
-            />
-
+            <ResizableHandle disabled={!!(draggedItem || draggedBlockId)} className="w-px bg-border hover:bg-primary/20 transition-colors" />
             <ResizablePanel defaultSize={28} minSize={15} maxSize={40}>
               <PreviewPanel />
             </ResizablePanel>

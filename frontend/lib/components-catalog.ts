@@ -14,28 +14,36 @@ import type { LibraryItem } from "./types";
 
 const SOURCE_ITEMS: LibraryItem[] = [
   {
-    id: "source-users",
+    id: "source-prd-advert-ods",
     type: "source",
-    label: "Users",
-    description: "Таблица пользователей",
+    label: "Prd Advert Ods",
+    description: "prd_advert_ods namespace",
     icon: "Database",
-    defaultConfig: { table: "users" },
+    defaultConfig: { namespace: "prd_advert_ods", vitrina: "", table: "" },
   },
   {
-    id: "source-orders",
+    id: "source-prd-advert-dict",
     type: "source",
-    label: "Orders",
-    description: "Таблица заказов",
+    label: "Prd Advert Dict",
+    description: "prd_advert_dict namespace",
     icon: "Database",
-    defaultConfig: { table: "orders" },
+    defaultConfig: { namespace: "prd_advert_dict", vitrina: "", table: "" },
   },
   {
-    id: "source-products",
+    id: "source-advert-dm",
     type: "source",
-    label: "Products",
-    description: "Таблица товаров",
+    label: "Advert Dm",
+    description: "advert_dm namespace",
     icon: "Database",
-    defaultConfig: { table: "products" },
+    defaultConfig: { namespace: "advert_dm", vitrina: "", table: "" },
+  },
+  {
+    id: "source-pixel",
+    type: "source",
+    label: "Pixel",
+    description: "pixel namespace",
+    icon: "Database",
+    defaultConfig: { namespace: "pixel", vitrina: "", table: "" },
   },
   {
     id: "source-custom",
@@ -303,6 +311,13 @@ const SUBQUERY_ITEMS: LibraryItem[] = [
     defaultConfig: { alias: "sub" },
   },
 ];
+
+export const NAMESPACE_VITRINAS: Record<string, string[]> = {
+  prd_advert_ods: ["dsp_events", "sgm_upload_dsp_segment", "http_cyrillic", "imsi_x_msisdn_actual", "cm_id_msisdn"],
+  prd_advert_dict: ["v_segments_ref", "v_catalog_2gis_phones", "v_region_gibdd_codes", "v_cities_regions"],
+  advert_dm: ["segments_bd_custom"],
+  pixel: ["tracking_all"],
+};
 
 // ---------------------------------------------------------------------------
 // Сборка единого списка в порядке отображения в сайдбаре

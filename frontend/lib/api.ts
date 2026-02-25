@@ -32,10 +32,15 @@ export interface BackendQueryPayload {
   limit?: number;
 }
 
-/** Ответ бекенда: эхо payload или скомпилированный SQL (когда будет реализовано). */
+/** Ответ бекенда: эхо payload, скомпилированный SQL или результат выполнения. */
 export interface CompileResponse {
   echo?: unknown;
   sql?: string;
+  columns?: string[];
+  rows?: unknown[][];
+  row_count?: number;
+  truncated?: boolean;
+  execution_time_ms?: number;
 }
 
 type FrontendJson = Record<string, unknown>;
@@ -194,10 +199,33 @@ export async function compileQueryOnBackend(
   return res.json() as Promise<CompileResponse>;
 }
 
-/** Строковое представление ответа бекенда для отображения (SQL или эхо payload). */
+/** Строковое представление ответа бекенда для отображения. */
 export function formatBackendResponse(data: CompileResponse): string {
+  if (data.rows != null && data.columns != null) {
+    const parts: string[] = [];
+    if (data.sql) parts.push(`-- SQL\n${data.sql}\n`);
+
+    const meta: string[] = [];
+    if (data.row_count != null) meta.push(`rows: ${data.row_count}`);
+    if (data.truncated) meta.push("truncated: true");
+    if (data.execution_time_ms != null) meta.push(`time: ${data.execution_time_ms}ms`);
+    if (meta.length) parts.push(`-- ${meta.join("  |  ")}\n`);
+
+    const cols = data.columns;
+    const rows = data.rows;
+    const widths = cols.map((c, i) =>
+      Math.max(c.length, ...rows.map((r) => String(r[i] ?? "").length))
+    );
+    const sep = widths.map((w) => "-".repeat(w)).join("-+-");
+    const header = cols.map((c, i) => c.padEnd(widths[i])).join(" | ");
+    const body = rows
+      .map((r) => r.map((v, i) => String(v ?? "").padEnd(widths[i])).join(" | "))
+      .join("\n");
+    parts.push([header, sep, body].join("\n"));
+
+    return parts.join("\n");
+  }
   if (data.sql != null && data.sql !== "") return data.sql;
-  if (data.echo !== undefined)
-    return JSON.stringify(data.echo, null, 2);
+  if (data.echo !== undefined) return JSON.stringify(data.echo, null, 2);
   return "";
 }
