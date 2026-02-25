@@ -243,6 +243,7 @@ function formatCondition(c: Record<string, unknown>): string {
 
 function quote(val: unknown): string {
   if (val === undefined || val === null || val === "") return "''";
+  if (typeof val === "boolean") return val ? "TRUE" : "FALSE";
   const s = String(val);
   if (/^\d+(\.\d+)?$/.test(s)) return s;
   return `'${s.replace(/'/g, "''")}'`;

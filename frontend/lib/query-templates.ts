@@ -61,7 +61,7 @@ function getComplexBlocks(): QueryBlock[] {
     block("source", "Orders", { table: "orders" }, { icon: "Database" }),
     block("subquery", "Subquery", { alias: "items" }, { icon: "Braces", children: innerSubqueryChildren }),
     block("column", "Select Column", { column: "id", alias: "" }, { icon: "Columns3" }),
-    block("filter", "Equals", { column: "status", operator: "=", value: "completed" }, { icon: "Filter" }),
+    block("filter", "Completed", { column: "completed", operator: "=", value: true }, { icon: "Filter" }),
   ];
   const subProdChildren: QueryBlock[] = [
     block("source", "Products", { table: "products" }, { icon: "Database" }),
