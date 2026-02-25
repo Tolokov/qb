@@ -37,7 +37,25 @@ PRODUCTS_SCHEMA = T.StructType(
     ]
 )
 
-TABLE_NAMES = ("users", "orders", "products")
+ORDER_ITEMS_SCHEMA = T.StructType(
+    [
+        T.StructField("item_id", T.LongType(), False),
+        T.StructField("order_id", T.IntegerType(), True),
+        T.StructField("product_id", T.IntegerType(), True),
+        T.StructField("quantity", T.IntegerType(), True),
+        T.StructField("unit_price", T.DecimalType(10, 2), True),
+    ]
+)
+
+CATEGORIES_SCHEMA = T.StructType(
+    [
+        T.StructField("id", T.IntegerType(), False),
+        T.StructField("name", T.StringType(), True),
+        T.StructField("parent_id", T.IntegerType(), True),
+    ]
+)
+
+TABLE_NAMES = ("users", "orders", "products", "order_items", "categories")
 VIEW_NAME = "user_orders_mart"
 
 # --- advert schemas ---
@@ -319,8 +337,68 @@ def _seed_if_empty(spark: SparkSession) -> None:
             (1, "Widget", Decimal("12.99"), base, True),
             (2, "Gadget", Decimal("29.99"), base, True),
             (3, "Gizmo", Decimal("5.50"), base, False),
+            (4, "Sprocket", Decimal("8.75"), base, True),
+            (5, "Doohickey", Decimal("3.25"), base, True),
         ]
         spark.createDataFrame(products_data, PRODUCTS_SCHEMA).write.mode("append").saveAsTable("products")
+    if spark.table("order_items").count() == 0:
+        order_items_data = [
+            (1, 1, 1, 2, Decimal("12.99")),
+            (2, 1, 2, 1, Decimal("29.99")),
+            (3, 1, 3, 3, Decimal("5.50")),
+            (4, 2, 2, 1, Decimal("29.99")),
+            (5, 2, 4, 2, Decimal("8.75")),
+            (6, 3, 1, 1, Decimal("12.99")),
+            (7, 3, 5, 4, Decimal("3.25")),
+            (8, 1, 4, 1, Decimal("8.75")),
+            (9, 2, 3, 0, Decimal("5.50")),
+            (10, 3, 2, 2, Decimal("29.99")),
+            (11, 1, 5, 5, Decimal("3.25")),
+            (12, 2, 1, 3, Decimal("12.99")),
+            (13, 3, 4, 1, Decimal("8.75")),
+            (14, 1, 3, 2, Decimal("5.50")),
+            (15, 2, 5, 1, Decimal("3.25")),
+            (16, 3, 3, 6, Decimal("5.50")),
+            (17, 1, 2, 2, Decimal("29.99")),
+            (18, 2, 4, 3, Decimal("8.75")),
+            (19, 3, 1, 1, Decimal("12.99")),
+            (20, 1, 5, 2, Decimal("3.25")),
+            (21, 2, 2, 4, Decimal("29.99")),
+            (22, 3, 5, 7, Decimal("3.25")),
+            (23, 1, 4, 1, Decimal("8.75")),
+            (24, 2, 3, 2, Decimal("5.50")),
+            (25, 3, 2, 1, Decimal("29.99")),
+        ]
+        spark.createDataFrame(order_items_data, ORDER_ITEMS_SCHEMA).write.mode("append").saveAsTable("order_items")
+    if spark.table("categories").count() == 0:
+        categories_data = [
+            (1, "Electronics", None),
+            (2, "Clothing", None),
+            (3, "Home & Garden", None),
+            (4, "Sports", None),
+            (5, "Books", None),
+            (6, "Smartphones", 1),
+            (7, "Laptops", 1),
+            (8, "Tablets", 1),
+            (9, "Accessories", 1),
+            (10, "Men's Wear", 2),
+            (11, "Women's Wear", 2),
+            (12, "Kids' Wear", 2),
+            (13, "Furniture", 3),
+            (14, "Kitchen", 3),
+            (15, "Garden Tools", 3),
+            (16, "Fitness", 4),
+            (17, "Outdoor", 4),
+            (18, "Team Sports", 4),
+            (19, "Fiction", 5),
+            (20, "Non-Fiction", 5),
+            (21, "Science & Tech", 5),
+            (22, "Audio", 1),
+            (23, "Cameras", 1),
+            (24, "Shoes", 2),
+            (25, "Textbooks", 5),
+        ]
+        spark.createDataFrame(categories_data, CATEGORIES_SCHEMA).write.mode("append").saveAsTable("categories")
 
 
 def _seed_advert_tables_if_empty(spark: SparkSession) -> None:
@@ -701,6 +779,8 @@ def create_tables_and_view(spark: SparkSession) -> None:
     _ensure_table(spark, "users", USERS_SCHEMA)
     _ensure_table(spark, "orders", ORDERS_SCHEMA)
     _ensure_table(spark, "products", PRODUCTS_SCHEMA)
+    _ensure_table(spark, "order_items", ORDER_ITEMS_SCHEMA)
+    _ensure_table(spark, "categories", CATEGORIES_SCHEMA)
     _seed_if_empty(spark)
     if VIEW_NAME not in [t.name for t in spark.catalog.listTables()]:
         spark.sql(
