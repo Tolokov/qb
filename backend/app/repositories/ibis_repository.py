@@ -229,6 +229,9 @@ class IbisRepository:
 
         where = payload.get("where")
         if where:
+            # Validate where-clause column names before building Ibis expressions, so we can
+            # return a clear HTTP 400 instead of low-level IbisTypeError about missing columns.
+            self._validate_where_columns(table_name, where, available_cols)
             condition = self._build_condition(expr, where)
             if condition is not None:
                 expr = expr.filter(condition)
@@ -405,6 +408,42 @@ class IbisRepository:
 
         return expr
 
+    def _validate_where_columns(
+        self,
+        table_name: str,
+        where: dict[str, Any],
+        available_cols: set[str],
+    ) -> None:
+        """Validate that all column references in WHERE exist in the table schema."""
+
+        missing: set[str] = set()
+
+        def _walk(node: dict[str, Any]) -> None:
+            conditions = node.get("conditions")
+            if conditions and isinstance(conditions, list):
+                for c in conditions:
+                    if isinstance(c, dict):
+                        _walk(c)
+                return
+
+            col_name = node.get("column") or node.get("field")
+            if isinstance(col_name, str) and col_name and col_name not in available_cols:
+                missing.add(col_name)
+
+        if isinstance(where, dict):
+            _walk(where)
+
+        if missing:
+            missing_str = ", ".join(sorted(missing))
+            available_str = ", ".join(sorted(available_cols))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Unknown column(s) in where for table '{table_name}': {missing_str}. "
+                    f"Available columns: {available_str}."
+                ),
+            )
+
     def _validate_projection(
         self,
         table_name: str,
@@ -574,13 +613,26 @@ class IbisRepository:
             return
 
         if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"Unknown table or view '{table_name}'. "
-                    "Check that the name is correct and available in Spark."
-                ),
-            )
+            # Attempt to (re)create demo tables and databases – this is safe and idempotent.
+            try:
+                create_tables_and_view(self._spark)
+                exists = self._spark.catalog.tableExists(table_name)
+            except Exception as e:  # noqa: BLE001
+                logger.error(
+                    "Failed to auto-create demo tables when resolving '%s': %s",
+                    table_name,
+                    e,
+                    exc_info=False,
+                )
+
+            if not exists:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown table or view '{table_name}'. "
+                        "Check that the name is correct and available in Spark."
+                    ),
+                )
 
     @staticmethod
     def _serialize(v: Any) -> Any:

@@ -24,10 +24,12 @@ const DEFAULT_LOCALE: Locale = "en";
 /**
  * Проверяет, что все обязательные поля блоков заполнены.
  * Сообщения возвращаются на выбранном языке (locale).
+ * @param isRoot — только при вызове от корня дерева проверяется наличие Data Source (в поддеревьях logical/subquery источник не требуется).
  */
 export function validateBlocks(
   blocks: QueryBlock[],
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = DEFAULT_LOCALE,
+  isRoot: boolean = true
 ): { valid: boolean; errors: ValidationError[] } {
   const t = TRANSLATIONS[locale].validation;
   const errors: ValidationError[] = [];
@@ -38,8 +40,15 @@ export function validateBlocks(
   }
 
   const sources = all.filter((b) => b.type === "source");
-  const hasValidSource = sources.some((s) => String(s.config.table ?? "").trim() !== "");
-  if (!hasValidSource) {
+  const getSourceTable = (s: QueryBlock): string => {
+    const table = String(s.config.table ?? "").trim();
+    if (table) return table;
+    const ns = String(s.config.namespace ?? "").trim();
+    const vit = String(s.config.vitrina ?? "").trim();
+    return ns && vit ? `${ns}.${vit}` : "";
+  };
+  const hasValidSource = sources.some((s) => getSourceTable(s) !== "");
+  if (isRoot && !hasValidSource) {
     if (sources.length > 0) {
       sources.forEach((s) => {
         errors.push({ blockId: s.id, field: "table", message: t.specifyTable });
@@ -56,7 +65,11 @@ export function validateBlocks(
   for (const block of all) {
     switch (block.type) {
       case "source": {
-        const table = String(block.config.table ?? "").trim();
+        const table =
+          String(block.config.table ?? "").trim() ||
+          (block.config.namespace && block.config.vitrina
+            ? `${String(block.config.namespace).trim()}.${String(block.config.vitrina).trim()}`
+            : "");
         if (!table) {
           errors.push({ blockId: block.id, field: "table", message: t.tableRequired });
         }
@@ -137,14 +150,14 @@ export function validateBlocks(
           errors.push({ blockId: block.id, field: "alias", message: t.specifySubqueryAlias });
         }
         if (block.children?.length) {
-          const childResult = validateBlocks(block.children, locale);
+          const childResult = validateBlocks(block.children, locale, false);
           errors.push(...childResult.errors);
         }
         break;
       }
       case "logical":
         if (block.children?.length) {
-          const childResult = validateBlocks(block.children, locale);
+          const childResult = validateBlocks(block.children, locale, false);
           errors.push(...childResult.errors);
         }
         break;

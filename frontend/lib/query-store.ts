@@ -92,7 +92,15 @@ export function blocksToJson(blocks: QueryBlock[]): object {
   const json: Record<string, unknown> = {};
 
   if (sources.length > 0) {
-    json.from = sources.map((s) => s.config.table).filter(Boolean);
+    json.from = sources
+      .map((s) => {
+        const table = String(s.config.table ?? "").trim();
+        if (table) return table;
+        const ns = String(s.config.namespace ?? "").trim();
+        const vit = String(s.config.vitrina ?? "").trim();
+        return ns && vit ? `${ns}.${vit}` : "";
+      })
+      .filter(Boolean);
   }
 
   if (columns.length > 0) {
@@ -196,8 +204,12 @@ export function blocksToSql(blocks: QueryBlock[]): string {
 
   const fromParts: string[] = [];
   for (const b of blocks) {
-    if (b.type === "source" && b.config.table) {
-      fromParts.push(String(b.config.table));
+    if (b.type === "source") {
+      const table = String(b.config.table ?? "").trim();
+      const ns = String(b.config.namespace ?? "").trim();
+      const vit = String(b.config.vitrina ?? "").trim();
+      const fromTable = table || (ns && vit ? `${ns}.${vit}` : "");
+      if (fromTable) fromParts.push(fromTable);
     } else if (b.type === "subquery" && b.children && b.children.length > 0 && b.config.alias) {
       const inner = blocksToSql(b.children).replace(/;\s*$/, "").trim();
       fromParts.push(`(\n${indentSql(inner, 1)}\n\t) AS ${b.config.alias}`);

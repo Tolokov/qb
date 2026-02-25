@@ -8,6 +8,7 @@ services:
       - "7077:7077"
     volumes:
       - ./defaultLakehouse:/opt/spark/data
+      - ./:/home/ien/Projects/qb
 
   spark-worker:
     image: apache/spark:3.5.3
@@ -19,6 +20,7 @@ services:
       - "8081:8081"
     volumes:
       - ./defaultLakehouse:/opt/spark/data
+      - ./:/home/ien/Projects/qb
 
   backend:
     build: ./backend
@@ -31,5 +33,16 @@ services:
       - APP_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     volumes:
       - ./defaultLakehouse:/opt/spark/data
+      - ./:/home/ien/Projects/qb
     ports:
       - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: qb-frontend
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    ports:
+      - "3000:3000"

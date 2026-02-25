@@ -30,7 +30,12 @@ function block(
 /** Сценарий 1: HTTP-логи — быстрый просмотр */
 function getHttpLogsBlocks(): QueryBlock[] {
   return [
-    block("source", "http_cyrillic", { table: "prd_advert_ods.http_cyrillic" }, { icon: "Database" }),
+    block(
+      "source",
+      "http_cyrillic",
+      { namespace: "prd_advert_ods", vitrina: "http_cyrillic", table: "prd_advert_ods.http_cyrillic" },
+      { icon: "Database" },
+    ),
     block("column", "request_id", { column: "request_id", alias: "" }, { icon: "Columns3" }),
     block("column", "url", { column: "url", alias: "" }, { icon: "Columns3" }),
     block("column", "user_agent", { column: "user_agent", alias: "" }, { icon: "Columns3" }),
@@ -39,17 +44,28 @@ function getHttpLogsBlocks(): QueryBlock[] {
   ];
 }
 
-/** Сценарий 2: Активные IMSI-записи МТС */
+/** Сценарий 2: Активные IMSI-записи МТС (источник — только table, без namespace/vitrina) */
 function getImsiMtsBlocks(): QueryBlock[] {
+  const andContainer: QueryBlock = block(
+    "logical",
+    "AND",
+    { operator: "AND" },
+    {
+      icon: "GitMerge",
+      children: [
+        block("filter", "operator = МТС", { column: "operator", operator: "=", value: "МТС" }, { icon: "Filter" }),
+        block("filter", "is_active = true", { column: "is_active", operator: "=", value: true }, { icon: "Filter" }),
+      ],
+    },
+  );
+
   return [
-    block("source", "imsi_x_msisdn_actual", { table: "prd_advert_ods.imsi_x_msisdn_actual" }, { icon: "Database" }),
+    block("source", "IMSI_X_MSISDN_ACTUAL", { table: "prd_advert_ods.imsi_x_msisdn_actual" }, { icon: "Database" }),
     block("column", "imsi", { column: "imsi", alias: "" }, { icon: "Columns3" }),
     block("column", "msisdn", { column: "msisdn", alias: "" }, { icon: "Columns3" }),
     block("column", "operator", { column: "operator", alias: "" }, { icon: "Columns3" }),
     block("column", "updated_at", { column: "updated_at", alias: "" }, { icon: "Columns3" }),
-    block("logical", "AND", { operator: "AND" }, { icon: "GitMerge", children: [] }),
-    block("filter", "operator = МТС", { column: "operator", operator: "=", value: "МТС" }, { icon: "Filter" }),
-    block("filter", "is_active = true", { column: "is_active", operator: "=", value: true }, { icon: "Filter" }),
+    andContainer,
     block("ordering", "updated_at DESC", { column: "updated_at", direction: "DESC" }, { icon: "ArrowDownNarrowWide" }),
     block("limit", "LIMIT", { limit: 100, offset: 0 }, { icon: "Minus" }),
   ];
@@ -58,7 +74,12 @@ function getImsiMtsBlocks(): QueryBlock[] {
 /** Сценарий 3: DSP-аукционы — ставки в диапазоне */
 function getDspAuctionsBlocks(): QueryBlock[] {
   return [
-    block("source", "dsp_events", { table: "prd_advert_ods.dsp_events" }, { icon: "Database" }),
+    block(
+      "source",
+      "dsp_events",
+      { namespace: "prd_advert_ods", vitrina: "dsp_events", table: "prd_advert_ods.dsp_events" },
+      { icon: "Database" },
+    ),
     block("column", "event_id", { column: "event_id", alias: "" }, { icon: "Columns3" }),
     block("column", "user_id", { column: "user_id", alias: "" }, { icon: "Columns3" }),
     block("column", "event_ts", { column: "event_ts", alias: "" }, { icon: "Columns3" }),
@@ -73,7 +94,16 @@ function getDspAuctionsBlocks(): QueryBlock[] {
 /** Сценарий 4: Загрузки сегментов — success и failed */
 function getSegmentUploadsBlocks(): QueryBlock[] {
   return [
-    block("source", "sgm_upload_dsp_segment", { table: "prd_advert_ods.sgm_upload_dsp_segment" }, { icon: "Database" }),
+    block(
+      "source",
+      "sgm_upload_dsp_segment",
+      {
+        namespace: "prd_advert_ods",
+        vitrina: "sgm_upload_dsp_segment",
+        table: "prd_advert_ods.sgm_upload_dsp_segment",
+      },
+      { icon: "Database" },
+    ),
     block("column", "upload_id", { column: "upload_id", alias: "" }, { icon: "Columns3" }),
     block("column", "segment_id", { column: "segment_id", alias: "" }, { icon: "Columns3" }),
     block("column", "msisdn", { column: "msisdn", alias: "" }, { icon: "Columns3" }),
@@ -85,17 +115,33 @@ function getSegmentUploadsBlocks(): QueryBlock[] {
   ];
 }
 
-/** Сценарий 5: Справочник 2GIS — Москва и Питер */
+/** Сценарий 5: Справочник 2GIS — Москва и Питер (источник — только table, без namespace/vitrina) */
 function get2gisDirectoryBlocks(): QueryBlock[] {
+  const orContainer: QueryBlock = block(
+    "logical",
+    "OR",
+    { operator: "OR" },
+    {
+      icon: "GitMerge",
+      children: [
+        block("filter", "city = Москва", { column: "city", operator: "=", value: "Москва" }, { icon: "Filter" }),
+        block(
+          "filter",
+          "city = Санкт-Петербург",
+          { column: "city", operator: "=", value: "Санкт-Петербург" },
+          { icon: "Filter" },
+        ),
+      ],
+    },
+  );
+
   return [
-    block("source", "v_catalog_2gis_phones", { table: "prd_advert_dict.v_catalog_2gis_phones" }, { icon: "Database" }),
+    block("source", "V_CATALOG_2GIS_PHONES", { table: "prd_advert_dict.v_catalog_2gis_phones" }, { icon: "Database" }),
     block("column", "phone_id", { column: "phone_id", alias: "" }, { icon: "Columns3" }),
     block("column", "phone_number", { column: "phone_number", alias: "" }, { icon: "Columns3" }),
     block("column", "rubric", { column: "rubric", alias: "" }, { icon: "Columns3" }),
     block("column", "city", { column: "city", alias: "" }, { icon: "Columns3" }),
-    block("logical", "OR", { operator: "OR" }, { icon: "GitMerge", children: [] }),
-    block("filter", "city = Москва", { column: "city", operator: "=", value: "Москва" }, { icon: "Filter" }),
-    block("filter", "city = Санкт-Петербург", { column: "city", operator: "=", value: "Санкт-Петербург" }, { icon: "Filter" }),
+    orContainer,
     block("ordering", "rubric ASC", { column: "rubric", direction: "ASC" }, { icon: "ArrowUpNarrowWide" }),
     block("limit", "LIMIT", { limit: 100, offset: 0 }, { icon: "Minus" }),
   ];
@@ -104,7 +150,12 @@ function get2gisDirectoryBlocks(): QueryBlock[] {
 /** Сценарий 6: CM-маппинг — пустой MSISDN */
 function getCmMappingBlocks(): QueryBlock[] {
   return [
-    block("source", "cm_id_msisdn", { table: "prd_advert_ods.cm_id_msisdn" }, { icon: "Database" }),
+    block(
+      "source",
+      "cm_id_msisdn",
+      { namespace: "prd_advert_ods", vitrina: "cm_id_msisdn", table: "prd_advert_ods.cm_id_msisdn" },
+      { icon: "Database" },
+    ),
     block("column", "cm_id", { column: "cm_id", alias: "" }, { icon: "Columns3" }),
     block("column", "source", { column: "source", alias: "" }, { icon: "Columns3" }),
     block("column", "created_at", { column: "created_at", alias: "" }, { icon: "Columns3" }),
@@ -118,7 +169,12 @@ function getCmMappingBlocks(): QueryBlock[] {
 /** Сценарий 7: Pixel — конверсии на checkout */
 function getPixelConversionsBlocks(): QueryBlock[] {
   return [
-    block("source", "tracking_all", { table: "pixel.tracking_all" }, { icon: "Database" }),
+    block(
+      "source",
+      "tracking_all",
+      { namespace: "pixel", vitrina: "tracking_all", table: "pixel.tracking_all" },
+      { icon: "Database" },
+    ),
     block("column", "pixel_id", { column: "pixel_id", alias: "" }, { icon: "Columns3" }),
     block("column", "user_id", { column: "user_id", alias: "" }, { icon: "Columns3" }),
     block("column", "page_url", { column: "page_url", alias: "" }, { icon: "Columns3" }),
