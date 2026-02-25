@@ -7,11 +7,10 @@ from typing import Any
 import ibis
 from pyspark.sql import SparkSession
 
+from app.config import SETTINGS
 from app.spark_tables import create_tables_and_view
 
 logger = logging.getLogger(__name__)
-
-MAX_ROWS = 500
 
 
 class IbisRepository:
@@ -39,14 +38,11 @@ class IbisRepository:
         df = expr.execute()
         elapsed_ms = int((time.monotonic() - start) * 1000)
 
-        truncated = len(df) > MAX_ROWS
-        df = df.head(MAX_ROWS)
+        truncated = len(df) > SETTINGS.MAX_ROWS
+        df = df.head(SETTINGS.MAX_ROWS)
 
         columns = list(df.columns)
-        rows = [
-            [self._serialize(v) for v in row]
-            for row in df.itertuples(index=False, name=None)
-        ]
+        rows = [[self._serialize(v) for v in row] for row in df.itertuples(index=False, name=None)]
 
         return {
             "sql": str(sql),

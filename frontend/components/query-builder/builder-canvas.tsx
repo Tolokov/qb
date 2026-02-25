@@ -41,6 +41,7 @@ export default function BuilderCanvas() {
   const removeHistoryEntry = useQueryStore((s) => s.removeHistoryEntry);
   const loadFromHistory = useQueryStore((s) => s.loadFromHistory);
   const setShowHistory = useQueryStore((s) => s.setShowHistory);
+  const hasHistoryEntryWithSameJson = useQueryStore((s) => s.hasHistoryEntryWithSameJson);
   const { setNodeRef } = useDroppable({ id: "canvas" });
 
   const saveCurrentAsDraftThenLoad = (entry: QueryHistoryEntry) => {
@@ -56,7 +57,10 @@ export default function BuilderCanvas() {
         sql: blocksToSql(blocks),
         executionTime: null,
       };
-      addHistoryEntry(draft);
+      const canonicalJson = JSON.stringify(JSON.parse(draft.json));
+      if (!hasHistoryEntryWithSameJson(canonicalJson)) {
+        addHistoryEntry(draft);
+      }
     }
     loadFromHistory(entry);
   };
@@ -169,9 +173,19 @@ export default function BuilderCanvas() {
                           onClick={() => saveCurrentAsDraftThenLoad(entry)}
                         >
                           <div className={cn("flex-1 min-w-0", locale === "braille" && "font-braille")}>
-                            <span className="text-[12px] font-medium text-card-foreground truncate block">
-                              {entry.name}
-                            </span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-[12px] font-medium text-card-foreground truncate">
+                                {entry.name}
+                              </span>
+                              {(() => {
+                                const table = entry.blocks.find((b) => b.type === "source")?.config.table as string | undefined;
+                                return table ? (
+                                  <span className="shrink-0 text-[10px] text-muted-foreground bg-muted/60 rounded px-1 py-0.5 leading-none">
+                                    {table}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </div>
                             <span className="text-[10px] text-muted-foreground">
                               {formatEntryTimestamp(entry.timestamp)}
                               {entry.executionTime != null && ` · ${entry.executionTime}ms`}

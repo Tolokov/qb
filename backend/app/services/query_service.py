@@ -44,8 +44,6 @@ class QueryService:
         if not isinstance(payload, allowed):
             raise ValueError("Body must be valid JSON (object/array/string/number/bool/null)")
 
-    def _validate_payload_structure(self, payload: dict[str, Any]) -> None:
-        pass
+    def _validate_payload_structure(self, payload: dict[str, Any]) -> None: ...
 
-    def _validate_business_rules(self, payload: dict[str, Any]) -> None:
-        pass
+    def _validate_business_rules(self, payload: dict[str, Any]) -> None: ...

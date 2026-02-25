@@ -15,10 +15,12 @@ router = APIRouter(tags=["Health"])
 
 def _check_frontend() -> ComponentHealth:
     origins = SETTINGS.cors_origins_list
-    url = origins[0].rstrip("/") if origins else "http://localhost:3000"
+    if not origins:
+        return ComponentHealth(status="ok")
+    url = origins[0].rstrip("/")
     try:
         req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=3) as resp:  # type: HTTPResponse
+        with urllib.request.urlopen(req, timeout=SETTINGS.HEALTH_CHECK_TIMEOUT_SEC) as resp:
             if resp.status < 500:
                 return ComponentHealth(status="ok")
             return ComponentHealth(status="down", detail=f"HTTP {resp.status}")
