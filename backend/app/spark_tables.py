@@ -369,7 +369,9 @@ def _seed_if_empty(spark: SparkSession) -> None:
             (24, 2, 3, 2, Decimal("5.50")),
             (25, 3, 2, 1, Decimal("29.99")),
         ]
-        spark.createDataFrame(order_items_data, ORDER_ITEMS_SCHEMA).write.mode("append").saveAsTable("order_items")
+        spark.createDataFrame(order_items_data, ORDER_ITEMS_SCHEMA).write.mode("append").saveAsTable(
+            "order_items"
+        )
     if spark.table("categories").count() == 0:
         categories_data = [
             (1, "Electronics", None),
@@ -398,7 +400,9 @@ def _seed_if_empty(spark: SparkSession) -> None:
             (24, "Shoes", 2),
             (25, "Textbooks", 5),
         ]
-        spark.createDataFrame(categories_data, CATEGORIES_SCHEMA).write.mode("append").saveAsTable("categories")
+        spark.createDataFrame(categories_data, CATEGORIES_SCHEMA).write.mode("append").saveAsTable(
+            "categories"
+        )
 
 
 def _seed_advert_tables_if_empty(spark: SparkSession) -> None:

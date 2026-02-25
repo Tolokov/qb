@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Clock,
-  Upload,
+  RotateCcw,
   Trash2,
   ChevronDown,
   ChevronUp,
@@ -141,6 +141,16 @@ export default function HistoryPanel() {
                             <span className="text-[13px] font-medium text-card-foreground truncate">
                               {entry.name}
                             </span>
+                            {(() => {
+                              const table = entry.blocks.find(
+                                (b) => b.type === "source",
+                              )?.config.table as string | undefined;
+                              return table ? (
+                                <span className="shrink-0 text-[10px] text-muted-foreground bg-muted/60 rounded px-1 py-0.5 leading-none">
+                                  {table}
+                                </span>
+                              ) : null;
+                            })()}
                             <button
                               type="button"
                               onClick={() => startRename(entry)}
@@ -170,16 +180,18 @@ export default function HistoryPanel() {
                           size="icon"
                           className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10"
                           onClick={() => loadFromHistory(entry)}
-                          title="Load into builder"
+                          title={t.reuseInBuilder}
+                          aria-label={t.reuseInBuilder}
                         >
-                          <Upload className="h-3.5 w-3.5" />
+                          <RotateCcw className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => removeHistoryEntry(entry.id)}
-                          title="Delete"
+                          title={t.removeFromHistory}
+                          aria-label={t.removeFromHistory}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
