@@ -5,7 +5,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { Layers, MousePointerClick, Sparkles, Trash2, LayoutTemplate, Clock, ChevronDown, X } from "lucide-react";
+import { Layers, MousePointerClick, Sparkles, Trash2, LayoutTemplate, UsersRound, Clock, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ import BlockCard from "./block-card";
 import { useQueryStore, blocksToJson, blocksToSql } from "@/lib/query-store";
 import { groupBlocksIntoRows } from "@/lib/canvas-groups";
 import { QUERY_TEMPLATES } from "@/lib/query-templates";
+import { USER_SCENARIO_TEMPLATES } from "@/lib/user-scenario-templates";
 import { TRANSLATIONS } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/hooks/use-locale";
@@ -132,6 +133,44 @@ export default function BuilderCanvas() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+          {/* Сценарии */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={btnClass}
+                aria-label="Выбрать пользовательский сценарий"
+              >
+                <UsersRound className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+                <span className={cn("truncate", locale === "braille" && "font-braille")}>{t.userScenarios}</span>
+                <ChevronDown className="h-3 w-3 opacity-70 shrink-0 sm:h-3.5 sm:w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6} className="w-72 rounded-xl shadow-xl">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                User Scenarios
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {USER_SCENARIO_TEMPLATES.map((tpl) => (
+                <DropdownMenuItem
+                  key={tpl.id}
+                  onClick={() => {
+                    setBlocksFromTemplate(tpl.getBlocks());
+                    setActiveBlockId(null);
+                  }}
+                  className="flex flex-col items-start gap-0.5 rounded-lg py-2.5 cursor-pointer"
+                >
+                  <span className="text-[12px] font-medium">{tpl.label}</span>
+                  <span className="text-[10px] text-muted-foreground leading-snug">
+                    {tpl.description}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* История */}
           <DropdownMenu>
