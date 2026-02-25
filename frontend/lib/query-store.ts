@@ -62,11 +62,27 @@ function insertBlockInTree(
   });
 }
 
+function collectBlocksOfTypeExcludingSubqueries(
+  blocks: QueryBlock[],
+  type: QueryBlock["type"]
+): QueryBlock[] {
+  const result: QueryBlock[] = [];
+  for (const b of blocks) {
+    if (b.type === type) {
+      result.push(b);
+    }
+    if (b.children && b.type !== "subquery") {
+      result.push(...collectBlocksOfTypeExcludingSubqueries(b.children, type));
+    }
+  }
+  return result;
+}
+
 export function blocksToJson(blocks: QueryBlock[]): object {
   const sources = blocks.filter((b) => b.type === "source");
   const columns = blocks.filter((b) => b.type === "column");
-  const filters = blocks.filter((b) => b.type === "filter");
-  const logicals = blocks.filter((b) => b.type === "logical");
+  const filters = collectBlocksOfTypeExcludingSubqueries(blocks, "filter");
+  const logicals = collectBlocksOfTypeExcludingSubqueries(blocks, "logical");
   const aggregations = blocks.filter((b) => b.type === "aggregation");
   const grouping = blocks.filter((b) => b.type === "grouping");
   const ordering = blocks.filter((b) => b.type === "ordering");
@@ -87,6 +103,10 @@ export function blocksToJson(blocks: QueryBlock[]): object {
     });
   } else if (aggregations.length === 0) {
     json.select = ["*"];
+  }
+
+  if (columns.some((c) => c.config.distinct === true)) {
+    json.distinct = true;
   }
 
   if (aggregations.length > 0) {
@@ -170,7 +190,9 @@ export function blocksToSql(blocks: QueryBlock[]): string {
       selects.push(a.alias ? `${expr} AS ${a.alias}` : expr);
     }
   }
-  parts.push(`SELECT ${selects.length > 0 ? selects.join(", ") : "*"}`);
+  const distinct = Boolean(json.distinct);
+  const selectClause = selects.length > 0 ? selects.join(", ") : "*";
+  parts.push(`SELECT ${distinct ? "DISTINCT " : ""}${selectClause}`);
 
   const fromParts: string[] = [];
   for (const b of blocks) {
@@ -282,6 +304,7 @@ export interface QueryBuilderState {
   setLastAppliedFromTemplate: (value: boolean) => void;
   addHistoryEntry: (entry: QueryHistoryEntry) => void;
   removeHistoryEntry: (id: string) => void;
+  clearHistory: () => void;
   renameHistoryEntry: (id: string, name: string) => void;
   loadFromHistory: (entry: QueryHistoryEntry) => void;
   hasHistoryEntryWithSameJson: (canonicalJsonStr: string) => boolean;
@@ -315,13 +338,22 @@ export const useQueryStore = create<QueryBuilderState>()(
             item.type === "subquery" || item.type === "logical" ? [] : undefined,
         };
         set((state) => {
+          let targetParentId = parentId;
+
+          if (!targetParentId && item.type === "filter") {
+            const logicalContainers = state.blocks.filter((b) => b.type === "logical");
+            if (logicalContainers.length > 0) {
+              targetParentId = logicalContainers[logicalContainers.length - 1]?.id;
+            }
+          }
+
           const isFirstSource =
             item.type === "source" &&
-            !parentId &&
+            !targetParentId &&
             !state.blocks.some((b) => b.type === "source");
 
-          const newBlocks = parentId
-            ? insertBlockInTree(state.blocks, parentId, newBlock)
+          const newBlocks = targetParentId
+            ? insertBlockInTree(state.blocks, targetParentId, newBlock)
             : [...state.blocks, newBlock];
 
           if (isFirstSource) {
@@ -440,6 +472,8 @@ export const useQueryStore = create<QueryBuilderState>()(
 
       removeHistoryEntry: (id) =>
         set((state) => ({ history: state.history.filter((e) => e.id !== id) })),
+
+      clearHistory: () => set({ history: [] }),
 
       renameHistoryEntry: (id, name) =>
         set((state) => ({

@@ -12,7 +12,7 @@ from app.services.query_service import QueryService
 
 router = APIRouter(tags=["Query"])
 
-_QUERY_LOG_PATH = Path(__file__).resolve().parents[6] / "logs" / "queries.jsonl"
+_QUERY_LOG_PATH = Path(__file__).resolve().parents[5] / "logs" / "queries.jsonl"
 _QUERY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 _query_logger = logging.getLogger("query.requests")

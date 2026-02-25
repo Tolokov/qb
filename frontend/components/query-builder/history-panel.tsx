@@ -33,6 +33,7 @@ export default function HistoryPanel() {
   const setShowHistory = useQueryStore((s) => s.setShowHistory);
   const history = useQueryStore((s) => s.history);
   const removeHistoryEntry = useQueryStore((s) => s.removeHistoryEntry);
+  const clearHistory = useQueryStore((s) => s.clearHistory);
   const renameHistoryEntry = useQueryStore((s) => s.renameHistoryEntry);
   const loadFromHistory = useQueryStore((s) => s.loadFromHistory);
 
@@ -63,18 +64,33 @@ export default function HistoryPanel() {
   return (
     <Dialog open={showHistory} onOpenChange={setShowHistory}>
       <DialogContent className={cn("max-w-2xl max-h-[80vh] p-0 gap-0 rounded-2xl border-border bg-card overflow-hidden shadow-2xl", locale === "braille" && "font-braille")}>
-        <DialogHeader className="px-5 py-4 border-b border-border bg-card/80 backdrop-blur-sm">
-          <DialogTitle className="flex items-center gap-2.5 text-[13px] font-semibold">
-            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
-              <Clock className="h-3 w-3 text-primary" />
-            </div>
-            {t.queryHistory}
+        <DialogHeader className="px-5 py-3 border-b border-border bg-card/80 backdrop-blur-sm">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="flex items-center gap-2.5 text-[13px] font-semibold">
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
+                <Clock className="h-3 w-3 text-primary" />
+              </div>
+              {t.queryHistory}
+              {history.length > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  {history.length}
+                </span>
+              )}
+            </DialogTitle>
+
             {history.length > 0 && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                {history.length}
-              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 text-[11px] rounded-md border border-border bg-card/60 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/40"
+                onClick={() => clearHistory()}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>{t.clearHistory}</span>
+              </Button>
             )}
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(80vh-60px)]">

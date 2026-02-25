@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { CATEGORY_COLORS, type QueryBlock } from "@/lib/types";
 import { useQueryStore } from "@/lib/query-store";
 import { NAMESPACE_VITRINAS } from "@/lib/components-catalog";
@@ -60,7 +61,41 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Braces,
 };
 
+const FILTER_OPERATOR_LABELS: Record<string, string> = {
+  "=": "Equals",
+  "!=": "Not Equals",
+  ">": "Greater Than",
+  "<": "Less Than",
+  ">=": "Greater Or Equal",
+  "<=": "Less Or Equal",
+  LIKE: "Like",
+  IN: "In",
+  BETWEEN: "Between",
+  "IS NULL": "Is Null",
+  "IS NOT NULL": "Is Not Null",
+};
+
 function getIconForBlock(block: QueryBlock): React.ComponentType<{ className?: string }> {
+  if (block.type === "logical") {
+    const op = String(block.config.operator || block.label || "AND").toUpperCase();
+    if (op === "OR") return GitBranch;
+    if (op === "NOT") return Ban;
+    return GitMerge;
+  }
+
+  if (block.type === "ordering") {
+    const dir = String(block.config.direction || "ASC").toUpperCase();
+    return dir === "DESC" ? ArrowDownNarrowWide : ArrowUpNarrowWide;
+  }
+
+  if (block.type === "filter") {
+    const op = String(block.config.operator || "").toUpperCase();
+    if (op === ">" || op === ">=") return ArrowUp;
+    if (op === "<" || op === "<=") return ArrowDown;
+    if (op === "BETWEEN") return GitMerge;
+    return Filter;
+  }
+
   if (block.icon && ICON_MAP[block.icon]) return ICON_MAP[block.icon];
   const typeMap: Record<string, React.ComponentType<{ className?: string }>> = {
     source: Database,
@@ -143,14 +178,32 @@ export default function BlockCard({ block, depth = 0 }: BlockCardProps) {
 
   const isColumnBlock = block.type === "column";
   const isSourceBlock = block.type === "source";
+  const isLogicalBlock = block.type === "logical";
+
+  const displayLabel =
+    block.type === "logical"
+      ? String(block.config.operator || block.label || "AND").toUpperCase()
+      : block.type === "ordering"
+        ? `ORDER ${String(block.config.direction || "ASC").toUpperCase()}`
+        : block.type === "filter"
+          ? String(
+              block.label ||
+                FILTER_OPERATOR_LABELS[String(block.config.operator || "=")] ||
+                "Filter",
+            ).toUpperCase()
+          : block.label;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`group relative rounded-xl border transition-all duration-200 ${colors.bg} ${colors.border} ${
-        isSourceBlock ? "w-full" : isColumnBlock ? "w-fit max-w-full rounded-lg" : ""
-      } ${
+        isSourceBlock || isLogicalBlock
+          ? "w-full"
+          : isColumnBlock
+            ? "w-fit max-w-full rounded-lg"
+            : ""
+      } ${isLogicalBlock ? "min-h-[112px]" : ""} ${
         isDragging ? "opacity-40 shadow-2xl z-50 scale-[1.02]" : "shadow-sm hover:shadow-md"
       } ${isActive ? "ring-2 ring-primary/25 shadow-md" : ""} ${depth > 0 ? "ml-4" : ""}`}
       onClick={(e) => {
@@ -198,7 +251,7 @@ export default function BlockCard({ block, depth = 0 }: BlockCardProps) {
                 isColumnBlock ? "text-[10px]" : "text-[11px]"
               }`}
             >
-              {block.label}
+              {displayLabel}
             </span>
           </div>
 
@@ -370,6 +423,17 @@ function ConfigInputs({
             placeholder="alias"
             className={`${baseInputClass} ${baseInputSize} ${isColumnBlock ? "w-20 min-w-0" : "w-24"}`}
           />
+          <div className="flex items-center gap-1.5">
+            <Switch
+              checked={Boolean(block.config.distinct)}
+              onCheckedChange={(checked) => onUpdate("distinct", checked)}
+              aria-label={t.distinct}
+              className="data-[state=checked]:bg-primary/80"
+            />
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+              {t.distinct}
+            </span>
+          </div>
         </>
       );
     }
@@ -402,7 +466,12 @@ function ConfigInputs({
           </div>
           <Select
             value={String(block.config.operator || "=")}
-            onValueChange={(v) => onUpdate("operator", v)}
+            onValueChange={(v) => {
+              onUpdate("operator", v);
+              const prettyLabel =
+                FILTER_OPERATOR_LABELS[v] || block.label || v;
+              onUpdate("label", prettyLabel);
+            }}
           >
             <SelectTrigger className="h-7 w-[5.5rem] text-xs font-mono bg-card/80 border-border/60 rounded-lg">
               <SelectValue />

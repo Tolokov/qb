@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 import ibis
+from fastapi import HTTPException, status
 from pyspark.sql import SparkSession
 
 from app.config import SETTINGS
@@ -34,6 +35,7 @@ class IbisRepository:
             return self._execute_with_sql(payload)
 
         table_name = str(from_val[0])
+        self._ensure_table_exists(table_name)
         select_cols = payload.get("select", ["*"])
 
         expr = self._build_expression(table_name, payload, select_cols)
@@ -59,6 +61,13 @@ class IbisRepository:
         }
 
     def _execute_with_sql(self, payload: dict[str, Any]) -> dict[str, Any]:
+        from_val = payload.get("from", [])
+        if isinstance(from_val, str):
+            from_val = [from_val]
+        if from_val and isinstance(from_val, list):
+            table_name = str(from_val[0])
+            self._ensure_table_exists(table_name)
+
         sql_str = self._payload_to_sql(payload).rstrip(";").strip()
         start = time.monotonic()
         spark_df = self._spark.sql(sql_str)
@@ -79,15 +88,39 @@ class IbisRepository:
         }
 
     def _payload_to_sql(self, payload: dict[str, Any]) -> str:
-        select_cols = payload.get("select", ["*"])
+        aggregations = payload.get("aggregations") or []
+        distinct = bool(payload.get("distinct"))
+
         select_parts: list[str] = []
-        for s in select_cols:
-            if isinstance(s, str):
-                select_parts.append(s if s else "*")
-            elif isinstance(s, dict) and "column" in s:
-                col = s["column"]
-                alias = s.get("alias", "")
-                select_parts.append(f"{col} AS {alias}" if alias else col)
+        if aggregations and isinstance(aggregations, list):
+            # Aggregate queries: SELECT [groupBy cols], AGG_FN(col) [AS alias] ...
+            group_by = payload.get("groupBy", [])
+            if group_by and isinstance(group_by, list):
+                for g in group_by:
+                    select_parts.append(str(g))
+
+            for agg in aggregations:
+                if not isinstance(agg, dict):
+                    continue
+                func = str(agg.get("function", "")).upper()
+                col = agg.get("column")
+                if not isinstance(col, str) or not col:
+                    continue
+                alias = agg.get("alias")
+                col_sql = "*" if col == "*" else col
+                expr_sql = f"{func}({col_sql})"
+                if isinstance(alias, str) and alias:
+                    expr_sql += f" AS {alias}"
+                select_parts.append(expr_sql)
+        else:
+            select_cols = payload.get("select", ["*"])
+            for s in select_cols:
+                if isinstance(s, str):
+                    select_parts.append(s if s else "*")
+                elif isinstance(s, dict) and "column" in s:
+                    col = s["column"]
+                    alias = s.get("alias", "")
+                    select_parts.append(f"{col} AS {alias}" if alias else col)
 
         from_val = payload.get("from", [])
         if isinstance(from_val, str):
@@ -104,7 +137,8 @@ class IbisRepository:
             inner_sql = self._payload_to_sql(sub_payload).rstrip(";").strip()
             from_parts.append(f"({inner_sql}) AS {alias}")
 
-        sql = f"SELECT {', '.join(select_parts) or '*'}"
+        distinct_kw = "DISTINCT " if distinct else ""
+        sql = f"SELECT {distinct_kw}{', '.join(select_parts) or '*'}"
         if from_parts:
             sql += f"\nFROM {', '.join(from_parts)}"
 
@@ -185,6 +219,12 @@ class IbisRepository:
         else:
             table = self._con.table(table_name)
 
+        available_cols = set(getattr(table, "columns", []))
+
+        aggregations = payload.get("aggregations") or []
+        if aggregations and isinstance(aggregations, list):
+            return self._build_aggregate_expression(table, table_name, payload, aggregations, available_cols)
+
         expr: Any = table
 
         where = payload.get("where")
@@ -192,6 +232,8 @@ class IbisRepository:
             condition = self._build_condition(expr, where)
             if condition is not None:
                 expr = expr.filter(condition)
+
+        self._validate_projection(table_name, payload, select_cols, available_cols)
 
         if select_cols and select_cols != ["*"]:
             cols: list[Any] = []
@@ -222,11 +264,234 @@ class IbisRepository:
             if sort_keys:
                 expr = expr.order_by(sort_keys)
 
+        distinct = payload.get("distinct")
+        if isinstance(distinct, bool) and distinct:
+            expr = expr.distinct()
+
         limit = payload.get("limit")
         if limit and isinstance(limit, int) and limit > 0:
             expr = expr.limit(limit)
 
         return expr
+
+    def _build_aggregate_expression(
+        self,
+        table: Any,
+        table_name: str,
+        payload: dict[str, Any],
+        aggregations: list[Any],
+        available_cols: set[str],
+    ) -> Any:
+        expr: Any = table
+
+        where = payload.get("where")
+        if where:
+            condition = self._build_condition(expr, where)
+            if condition is not None:
+                expr = expr.filter(condition)
+
+        group_by = payload.get("groupBy", [])
+        if group_by and isinstance(group_by, list):
+            missing_gb = [g for g in group_by if isinstance(g, str) and g not in available_cols]
+            if missing_gb:
+                cols_str = ", ".join(sorted(set(missing_gb)))
+                available_str = ", ".join(sorted(available_cols))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown column(s) in groupBy for table '{table_name}': {cols_str}. "
+                        f"Available columns: {available_str}."
+                    ),
+                )
+
+        metrics: dict[str, Any] = {}
+        agg_aliases: set[str] = set()
+
+        for agg in aggregations:
+            if not isinstance(agg, dict):
+                continue
+            func = str(agg.get("function", "")).upper()
+            column = agg.get("column")
+            if not isinstance(column, str) or not column:
+                continue
+            if column != "*" and column not in available_cols:
+                available_str = ", ".join(sorted(available_cols))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown column '{column}' in aggregations for table '{table_name}'. "
+                        f"Available columns: {available_str}."
+                    ),
+                )
+
+            alias = agg.get("alias")
+            if not isinstance(alias, str) or not alias:
+                base_col = "all" if column == "*" else column
+                alias_candidate = f"{func.lower()}_{base_col}"
+                suffix = 2
+                while alias_candidate in metrics:
+                    alias_candidate = f"{func.lower()}_{base_col}_{suffix}"
+                    suffix += 1
+                alias = alias_candidate
+
+            if func == "COUNT":
+                if column == "*" or not column:
+                    metric_expr = expr.count()
+                else:
+                    metric_expr = expr[column].count()
+            elif func == "SUM":
+                metric_expr = expr[column].sum()
+            elif func == "MIN":
+                metric_expr = expr[column].min()
+            elif func == "MAX":
+                metric_expr = expr[column].max()
+            elif func == "AVG":
+                metric_expr = expr[column].mean()
+            else:
+                continue
+
+            metrics[alias] = metric_expr
+            agg_aliases.add(alias)
+
+        if not metrics:
+            # No valid aggregations – return filtered table without aggregation.
+            return expr
+
+        if group_by and isinstance(group_by, list):
+            expr = expr.group_by(group_by).aggregate(**metrics)
+        else:
+            expr = expr.aggregate(**metrics)
+
+        order_by = payload.get("orderBy", [])
+        if order_by and isinstance(order_by, list):
+            invalid_order_cols: list[str] = []
+            sort_keys: list[Any] = []
+            for o in order_by:
+                if not isinstance(o, dict):
+                    continue
+                col_name = o.get("column")
+                if not isinstance(col_name, str) or not col_name:
+                    continue
+                if col_name not in agg_aliases and (not group_by or col_name not in group_by):
+                    invalid_order_cols.append(col_name)
+                direction = str(o.get("direction", "ASC")).upper()
+                if direction == "DESC":
+                    sort_keys.append(ibis.desc(col_name))
+                else:
+                    sort_keys.append(col_name)
+
+            if invalid_order_cols:
+                cols_str = ", ".join(sorted(set(invalid_order_cols)))
+                allowed = sorted(set(agg_aliases).union(set(group_by if isinstance(group_by, list) else [])))
+                allowed_str = ", ".join(allowed)
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown column(s) in orderBy for aggregated query on '{table_name}': {cols_str}. "
+                        f"Allowed columns: {allowed_str}."
+                    ),
+                )
+
+            if sort_keys:
+                expr = expr.order_by(sort_keys)
+
+        distinct = payload.get("distinct")
+        if isinstance(distinct, bool) and distinct:
+            expr = expr.distinct()
+
+        limit = payload.get("limit")
+        if isinstance(limit, int) and limit > 0:
+            expr = expr.limit(limit)
+
+        return expr
+
+    def _validate_projection(
+        self,
+        table_name: str,
+        payload: dict[str, Any],
+        select_cols: list[Any],
+        available_cols: set[str],
+    ) -> None:
+        """Validate selected / grouped / ordered columns against available schema."""
+        if select_cols and select_cols != ["*"]:
+            missing: list[str] = []
+            seen: set[str] = set()
+            duplicates: set[str] = set()
+
+            for item in select_cols:
+                if isinstance(item, str):
+                    if item == "*":
+                        continue
+                    name = item
+                    if name not in available_cols:
+                        missing.append(name)
+                elif isinstance(item, dict) and "column" in item:
+                    col_name = str(item["column"])
+                    if col_name not in available_cols:
+                        missing.append(col_name)
+                    alias = item.get("alias")
+                    name = str(alias) if isinstance(alias, str) and alias else col_name
+                else:
+                    continue
+
+                if name in seen:
+                    duplicates.add(name)
+                else:
+                    seen.add(name)
+
+            if missing:
+                missing_str = ", ".join(sorted(set(missing)))
+                available_str = ", ".join(sorted(available_cols))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown column(s) in select for table '{table_name}': {missing_str}. "
+                        f"Available columns: {available_str}."
+                    ),
+                )
+            if duplicates:
+                dup_str = ", ".join(sorted(duplicates))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Duplicate column(s) in select for table '{table_name}': {dup_str}. "
+                        "Remove duplicates or use aliases."
+                    ),
+                )
+
+        group_by = payload.get("groupBy", [])
+        if group_by and isinstance(group_by, list):
+            missing_gb = [g for g in group_by if isinstance(g, str) and g not in available_cols]
+            if missing_gb:
+                cols_str = ", ".join(sorted(set(missing_gb)))
+                available_str = ", ".join(sorted(available_cols))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown column(s) in groupBy for table '{table_name}': {cols_str}. "
+                        f"Available columns: {available_str}."
+                    ),
+                )
+
+        order_by = payload.get("orderBy", [])
+        if order_by and isinstance(order_by, list):
+            missing_ob: list[str] = []
+            for spec in order_by:
+                if not isinstance(spec, dict):
+                    continue
+                col = spec.get("column")
+                if isinstance(col, str) and col not in available_cols:
+                    missing_ob.append(col)
+            if missing_ob:
+                cols_str = ", ".join(sorted(set(missing_ob)))
+                available_str = ", ".join(sorted(available_cols))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Unknown column(s) in orderBy for table '{table_name}': {cols_str}. "
+                        f"Available columns: {available_str}."
+                    ),
+                )
 
     def _build_condition(self, table: Any, where: dict[str, Any]) -> Any:
         operator = where.get("operator", "=")
@@ -254,6 +519,25 @@ class IbisRepository:
 
         col = table[col_name]
 
+        # Best-effort приведение строковых значений к числам для базовых сравнений,
+        # чтобы запросы с JSON-строками вроде "1" работали для числовых колонок.
+        def _coerce_scalar(raw: Any) -> Any:
+            if isinstance(raw, str):
+                text = raw.strip()
+                if not text:
+                    return raw
+                try:
+                    return int(text)
+                except ValueError:
+                    try:
+                        return float(text)
+                    except ValueError:
+                        return raw
+            return raw
+
+        if operator in ("=", "!=", ">", "<", ">=", "<=", "BETWEEN"):
+            value = _coerce_scalar(value)
+
         if operator in ("IS NULL", "isnull"):
             return col.isnull()
         if operator in ("IS NOT NULL", "notnull"):
@@ -276,8 +560,27 @@ class IbisRepository:
             vals = [v.strip() for v in str(value).split(",")] if isinstance(value, str) else list(value)
             return col.isin(vals)
         if operator == "BETWEEN":
-            return col.between(where.get("valueLow"), where.get("valueHigh"))
+            low = _coerce_scalar(where.get("valueLow"))
+            high = _coerce_scalar(where.get("valueHigh"))
+            return col.between(low, high)
         return None
+
+    def _ensure_table_exists(self, table_name: str) -> None:
+        """Ensure the referenced Spark table or view exists; otherwise raise a clear HTTP error."""
+        try:
+            exists = self._spark.catalog.tableExists(table_name)
+        except Exception as e:  # noqa: BLE001
+            logger.error("Failed to check table existence for '%s': %s", table_name, e, exc_info=False)
+            return
+
+        if not exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Unknown table or view '{table_name}'. "
+                    "Check that the name is correct and available in Spark."
+                ),
+            )
 
     @staticmethod
     def _serialize(v: Any) -> Any:

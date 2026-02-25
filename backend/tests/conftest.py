@@ -33,3 +33,11 @@ def crud_client(app):
         yield c
     app.dependency_overrides.pop(get_crud_service, None)
     app.dependency_overrides.pop(get_query_service, None)
+
+
+@pytest.fixture(scope="module")
+def compile_client():
+    """Client with real QueryService/IbisRepository (uses actual Spark session)."""
+    app = create_app()
+    with TestClient(app) as c:
+        yield c

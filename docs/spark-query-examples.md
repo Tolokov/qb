@@ -125,10 +125,7 @@ LIMIT 200
 ```json
 {
   "from": ["prd.sessions"],
-  "select": [
-    "msisdn",
-    { "column": "session_id", "alias": "session_count" }
-  ],
+  "select": ["msisdn"],
   "where": {
     "operator": "AND",
     "conditions": [
@@ -137,6 +134,9 @@ LIMIT 200
     ]
   },
   "groupBy": ["msisdn"],
+  "aggregations": [
+    { "function": "COUNT", "column": "*", "alias": "session_count" }
+  ],
   "orderBy": [
     { "column": "session_count", "direction": "DESC" }
   ],
@@ -146,7 +146,7 @@ LIMIT 200
 
 **Ожидаемый SQL:**
 ```sql
-SELECT msisdn, session_id AS session_count
+SELECT msisdn, COUNT(*) AS session_count
 FROM prd.sessions
 WHERE start_time >= '2024-01-01'
   AND start_time < '2024-02-01'
@@ -268,17 +268,17 @@ LIMIT 300
 ```json
 {
   "from": ["orders"],
-  "select": [
-    { "column": "product_id", "alias": "product_id" },
-    { "column": "order_id",   "alias": "order_count" },
-    { "column": "amount",     "alias": "total_revenue" }
-  ],
+  "select": ["product_id"],
   "where": {
     "column": "status",
     "operator": "=",
     "value": "completed"
   },
   "groupBy": ["product_id"],
+  "aggregations": [
+    { "function": "COUNT", "column": "*", "alias": "order_count" },
+    { "function": "SUM",   "column": "amount", "alias": "total_revenue" }
+  ],
   "orderBy": [
     { "column": "total_revenue", "direction": "DESC" }
   ],
@@ -288,7 +288,9 @@ LIMIT 300
 
 **Ожидаемый SQL:**
 ```sql
-SELECT product_id, order_id AS order_count, amount AS total_revenue
+SELECT product_id,
+       COUNT(*) AS order_count,
+       SUM(amount) AS total_revenue
 FROM orders
 WHERE status = 'completed'
 GROUP BY product_id
@@ -370,7 +372,7 @@ LIMIT 500
    - Запрос с `BETWEEN` — убедиться, что `valueLow`/`valueHigh` подставляются без ошибок валидации.
 6. **Проверить ответ API напрямую:**
    ```bash
-   curl -s -X POST http://localhost:8000/api/v1/query/execute \
+   curl -s -X POST http://localhost:8000/api/v1/query/compile \
      -H "Content-Type: application/json" \
      -d '{"from":["users"],"select":["*"],"limit":10}' | python3 -m json.tool
    ```

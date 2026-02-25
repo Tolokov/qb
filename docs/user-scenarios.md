@@ -330,10 +330,10 @@ LIMIT 100
   - Сценарий 5 (OR + =) — убедиться, что скобки расставлены правильно в сгенерированном SQL.
   - Сценарий 4 (`IN`) — убедиться, что значения через запятую преобразуются в `IN ('success', 'failed')`.
 6. **Проверить через API напрямую** (без UI):
-  ```bash
-  curl -s -X POST http://localhost:8000/api/v1/query/execute \
-    -H "Content-Type: application/json" \
-    -d '{"from":["prd_advert_ods.http_cyrillic"],"select":["request_id","url"],"limit":5}' \
-    | python3 -m json.tool
-  ```
-7. **Зафиксировать отклонения** — если SQL из QB не совпадает с ожидаемым, завести задачу с указанием сценария и фактического/ожидаемого SQL.
+```bash
+curl -s -X POST http://localhost:8000/api/v1/query/compile \
+  -H "Content-Type: application/json" \
+  -d '{"from":["prd_advert_ods.http_cyrillic"],"select":["request_id","url"],"limit":5}' \
+  | python3 -m json.tool
+```
+7. **Зафиксировать отклонения** — если SQL из QB не совпадает с ожидаемым, завести задачу с указанием сценария, фактического/ожидаемого SQL и текста ошибки (если бекенд вернул `400` или `503`).

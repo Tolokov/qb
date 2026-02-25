@@ -20,7 +20,13 @@ export default function BackendResponsePanel() {
   const isError = !!backendError && !backendResponse;
 
   useEffect(() => {
-    if (content !== null) setCollapsed(false);
+    if (content !== null) {
+      const timeoutId = window.setTimeout(() => {
+        setCollapsed(false);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
+    }
+    return undefined;
   }, [content]);
 
   const copyContent = async () => {

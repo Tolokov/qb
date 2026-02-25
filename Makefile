@@ -40,10 +40,12 @@ frontend:
 backend: ensure-backend
 	cd backend && APP_SPARK_WAREHOUSE_DIR="$(SPARK_WAREHOUSE_DIR)" ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
 
-# Pre-commit + pytest для бекенда
+# Pre-commit + pytest для бекенда и тесты фронтенда
 pre: ensure-backend
 	cd backend && pre-commit run --config .pre-commit-config.yaml --all-files
 	cd backend && ./venv/bin/pytest
+	cd frontend && pnpm lint
+	cd frontend && pnpm test
 
 # Запуск фронтенда и бекенда вместе (Ctrl+C останавливает оба)
 run: ensure-backend

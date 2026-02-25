@@ -133,3 +133,44 @@ def test_compile_direct_object_vs_wrapped(client):
     r2 = client.post(COMPILE_URL, json={"payload": {"x": 1}})
     assert r2.status_code == 200
     assert r2.json()["echo"] == {"x": 1}
+
+
+# ----- Query validation for query-like JSON (no Spark required) -----
+
+
+def test_compile_group_by_without_matching_select_returns_400(client):
+    """GROUP BY without matching SELECT columns is rejected with a clear 400 error."""
+    payload = {"from": "users", "select": ["*"], "groupBy": ["id"]}
+    response = client.post(COMPILE_URL, json=payload)
+    assert response.status_code == 400
+    detail = response.json().get("detail", "")
+    assert "groupBy" in detail
+
+
+def test_compile_conflicting_order_by_directions_returns_400(client):
+    """Conflicting ASC/DESC for the same column in orderBy returns 400."""
+    payload = {
+        "from": "users",
+        "select": ["*"],
+        "orderBy": [
+            {"column": "id", "direction": "ASC"},
+            {"column": "id", "direction": "DESC"},
+        ],
+    }
+    response = client.post(COMPILE_URL, json=payload)
+    assert response.status_code == 400
+    detail = response.json().get("detail", "")
+    assert "orderBy" in detail
+
+
+def test_compile_having_not_supported_returns_400(client):
+    """HAVING clause is explicitly rejected with a 400 error and message."""
+    payload = {
+        "from": "users",
+        "select": ["*"],
+        "having": {"column": "id", "operator": ">", "value": 1},
+    }
+    response = client.post(COMPILE_URL, json=payload)
+    assert response.status_code == 400
+    detail = response.json().get("detail", "")
+    assert "HAVING is not supported" in detail
