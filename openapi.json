@@ -3,7 +3,7 @@
   "info": {
     "title": "Query Builder Service",
     "description": "Принимает декларативное JSON-описание запроса и компилирует его в Hadoop-совместимый SQL.",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "paths": {
     "/api/v1/health": {

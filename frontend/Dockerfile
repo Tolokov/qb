@@ -35,4 +35,3 @@ COPY --from=deps /app/node_modules ./node_modules
 EXPOSE 3000
 
 CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
-

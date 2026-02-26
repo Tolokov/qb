@@ -43,7 +43,7 @@ backend: ensure-backend
 # Pre-commit + pytest для бекенда и тесты фронтенда
 pre: ensure-backend
 	cd backend && pre-commit run --config .pre-commit-config.yaml --all-files
-	cd backend && ./venv/bin/pytest
+	cd backend && ./venv/bin/pytest -n auto
 	cd frontend && pnpm lint
 	cd frontend && pnpm test
 
