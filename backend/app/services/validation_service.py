@@ -72,15 +72,6 @@ class RequestValidationService:
                 detail="Stacked SQL statements are not allowed",
             )
 
-    @staticmethod
-    def _validate_payload_type(payload: object) -> None:
-        allowed = (dict, list, str, int, float, bool, type(None))
-        if not isinstance(payload, allowed):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Body must be valid JSON (object/array/string/number/bool/null)",
-            )
-
     def _validate_payload_structure(self, payload: dict[str, Any]) -> None:
         """Validate basic shape and types of query-like payloads."""
         if not self._is_query_like(payload):
@@ -327,6 +318,15 @@ class RequestValidationService:
                         "use either ASC or DESC for each column, not both."
                     ),
                 )
+
+    @staticmethod
+    def _validate_payload_type(payload: object) -> None:
+        allowed = (dict, list, str, int, float, bool, type(None))
+        if not isinstance(payload, allowed):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Body must be valid JSON (object/array/string/number/bool/null)",
+            )
 
     @staticmethod
     def _is_query_like(payload: dict[str, Any]) -> bool:

@@ -21,6 +21,7 @@ import {
   compileSqlOnBackend,
   formatBackendResponse,
 } from "@/lib/api";
+import { logFrontendQuery } from "@/lib/frontend-logs";
 import { generateId, cn } from "@/lib/utils";
 import type { QueryHistoryEntry } from "@/lib/types";
 import { TRANSLATIONS } from "@/lib/translations";
@@ -112,6 +113,7 @@ export default function PreviewPanel() {
 
     try {
       const json = (jsonPayload ?? blocksToJson(blocks)) as unknown;
+      void logFrontendQuery(json, sqlOutput);
       if (process.env.NODE_ENV === "development") {
         console.log(
           "[QB] payload sent to backend:",
@@ -170,6 +172,7 @@ export default function PreviewPanel() {
     setBackendResult,
     clearBackendResult,
     payloadFormat,
+    jsonPayload,
   ]);
 
   return (

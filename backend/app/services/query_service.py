@@ -54,7 +54,6 @@ class QueryService:
             ) from e
 
         try:
-            # Для SQL-сценария используем тот же единый репозиторийский метод execute.
             return self._repository.execute(sql)
         except HTTPException:
             raise
