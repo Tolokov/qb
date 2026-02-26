@@ -1,0 +1,29 @@
+# Node / Next
+node_modules/
+.next/
+
+# Build artifacts
+build/
+dist/
+
+# Python venv
+venv/
+.venv/
+backend/venv/
+
+# Python cache
+__pycache__/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Logs / temp
+logs/
+*.log
+*.tmp
+tmp/
