@@ -9,14 +9,12 @@ from fastapi import HTTPException, status
 from pyspark.sql import SparkSession
 
 from app.config import SETTINGS
-from app.spark_tables import create_tables_and_view
 
 logger = logging.getLogger(__name__)
 
 
 class IbisRepository:
     def __init__(self, spark: SparkSession) -> None:
-        create_tables_and_view(spark)
         self._spark = spark
         self._con = ibis.pyspark.connect(spark)
 
@@ -53,6 +51,32 @@ class IbisRepository:
         return {
             "sql": str(sql),
             "columns": columns,
+            "rows": rows,
+            "row_count": len(rows),
+            "truncated": truncated,
+            "execution_time_ms": elapsed_ms,
+            "echo": None,
+        }
+
+    def execute_sql(self, sql: str) -> dict[str, Any]:
+        sql_str = str(sql).rstrip(";\n").strip()
+        if not sql_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="SQL string must not be empty",
+            )
+
+        start = time.monotonic()
+        spark_df = self._spark.sql(sql_str)
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+        total = spark_df.count()
+        truncated = total > SETTINGS.MAX_ROWS
+        rows_data = spark_df.limit(SETTINGS.MAX_ROWS).collect()
+        columns = spark_df.columns
+        rows = [[self._serialize(v) for v in row] for row in rows_data]
+        return {
+            "sql": sql_str + ";",
+            "columns": list(columns),
             "rows": rows,
             "row_count": len(rows),
             "truncated": truncated,
@@ -603,36 +627,6 @@ class IbisRepository:
             high = _coerce_scalar(where.get("valueHigh"))
             return col.between(low, high)
         return None
-
-    def _ensure_table_exists(self, table_name: str) -> None:
-        """Ensure the referenced Spark table or view exists; otherwise raise a clear HTTP error."""
-        try:
-            exists = self._spark.catalog.tableExists(table_name)
-        except Exception as e:  # noqa: BLE001
-            logger.error("Failed to check table existence for '%s': %s", table_name, e, exc_info=False)
-            return
-
-        if not exists:
-            # Attempt to (re)create demo tables and databases – this is safe and idempotent.
-            try:
-                create_tables_and_view(self._spark)
-                exists = self._spark.catalog.tableExists(table_name)
-            except Exception as e:  # noqa: BLE001
-                logger.error(
-                    "Failed to auto-create demo tables when resolving '%s': %s",
-                    table_name,
-                    e,
-                    exc_info=False,
-                )
-
-            if not exists:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        f"Unknown table or view '{table_name}'. "
-                        "Check that the name is correct and available in Spark."
-                    ),
-                )
 
     @staticmethod
     def _serialize(v: Any) -> Any:

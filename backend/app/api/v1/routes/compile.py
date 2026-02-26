@@ -1,35 +1,14 @@
 import json
-import logging
-import logging.handlers
-from pathlib import Path
+
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Request
-
+from app.utils import get_query_logger, extract_payload
 from app.api.v1.schemas.query import QueryResponse
 from app.dependencies import get_query_service
 from app.services.query_service import QueryService
 
-router = APIRouter(tags=["Query"])
-
-_QUERY_LOG_PATH = Path(__file__).resolve().parents[5] / "logs" / "queries.jsonl"
-_QUERY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-_query_logger = logging.getLogger("query.requests")
-_query_logger.setLevel(logging.DEBUG)
-_query_logger.propagate = False
-if not _query_logger.handlers:
-    _handler = logging.FileHandler(_QUERY_LOG_PATH, encoding="utf-8")
-    _handler.setFormatter(logging.Formatter("%(message)s"))
-    _query_logger.addHandler(_handler)
-
-
-def _extract_payload(body: Any) -> Any:
-    """Extract payload from body. Backward compatible: {"payload": x} -> x; else body as-is."""
-    if isinstance(body, dict) and "payload" in body:
-        return body["payload"]
-    return body
-
+router = APIRouter()
 
 _COMPILE_BODY_EXAMPLE = {
     "from": "table",
@@ -52,7 +31,7 @@ async def compile_query_route(
     body: Any = Body(
         default=None,
         description="Любой JSON: object/array/string/number/bool/null. "
-        "Для обратной совместимости поддерживается формат {'payload': ...}.",
+                    "Для обратной совместимости поддерживается формат {'payload': ...}.",
         openapi_examples={
             "object": {
                 "summary": "Объект запроса (по умолчанию)",
@@ -79,7 +58,8 @@ async def compile_query_route(
 ) -> QueryResponse:
     if body is None and not await request.body():
         body = {}
-    _query_logger.debug(json.dumps(body, ensure_ascii=False, default=str))
-    data = _extract_payload(body)
+    query_logger = get_query_logger()
+    query_logger.debug(json.dumps(body, ensure_ascii=False, default=str))
+    data = extract_payload(body)
     result = service.execute(data)
     return QueryResponse(**result)

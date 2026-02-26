@@ -2,6 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+STATUS_OK = "ok"
+STATUS_DEGRADED = "degraded"
 
 class ComponentHealth(BaseModel):
     status: Literal["ok", "down"]

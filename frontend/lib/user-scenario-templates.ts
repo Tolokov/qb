@@ -160,7 +160,7 @@ function getCmMappingBlocks(): QueryBlock[] {
     block("column", "source", { column: "source", alias: "" }, { icon: "Columns3" }),
     block("column", "created_at", { column: "created_at", alias: "" }, { icon: "Columns3" }),
     block("column", "is_confirmed", { column: "is_confirmed", alias: "" }, { icon: "Columns3" }),
-    block("filter", "msisdn IS NULL", { column: "msisdn", operator: "IS NULL", value: "" }, { icon: "Filter" }),
+    block("filter", "is_confirmed = true", { column: "is_confirmed", operator: "=", value: true }, { icon: "Filter" }),
     block("ordering", "created_at DESC", { column: "created_at", direction: "DESC" }, { icon: "ArrowDownNarrowWide" }),
     block("limit", "LIMIT", { limit: 200, offset: 0 }, { icon: "Minus" }),
   ];

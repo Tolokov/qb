@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryStore, blocksToJson, blocksToSql } from "@/lib/query-store";
 import {
   compileRawJsonOnBackend,
+  compileSqlOnBackend,
   formatBackendResponse,
 } from "@/lib/api";
 import { generateId, cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ export default function PreviewPanel() {
   const [copiedSql, setCopiedSql] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
+  const [payloadFormat, setPayloadFormat] = useState<"json" | "sql">("json");
 
   const jsonOutput = useMemo(() => {
     if (blocks.length === 0) return "";
@@ -106,9 +108,15 @@ export default function PreviewPanel() {
     try {
       const json = blocksToJson(blocks) as unknown;
       if (process.env.NODE_ENV === "development") {
-        console.log("[QB] JSON payload sent to backend:", json);
+        console.log(
+          "[QB] payload sent to backend:",
+          payloadFormat === "json" ? json : sqlOutput,
+        );
       }
-      const result = await compileRawJsonOnBackend(json);
+      const result =
+        payloadFormat === "sql"
+          ? await compileSqlOnBackend(sqlOutput)
+          : await compileRawJsonOnBackend(json);
       const time = Date.now() - start;
       setBackendResult(formatBackendResponse(result), null, time, "success");
 
@@ -141,7 +149,23 @@ export default function PreviewPanel() {
     } finally {
       setIsRunning(false);
     }
-  }, [blocks, locale, t, historyLength, addHistoryEntry, jsonOutput, sqlOutput, setValidationErrors, toast, lastAppliedFromTemplate, setLastAppliedFromTemplate, hasHistoryEntryWithSameJson, setBackendResult, clearBackendResult]);
+  }, [
+    blocks,
+    locale,
+    t,
+    historyLength,
+    addHistoryEntry,
+    jsonOutput,
+    sqlOutput,
+    setValidationErrors,
+    toast,
+    lastAppliedFromTemplate,
+    setLastAppliedFromTemplate,
+    hasHistoryEntryWithSameJson,
+    setBackendResult,
+    clearBackendResult,
+    payloadFormat,
+  ]);
 
   return (
     <div className="flex h-full flex-col bg-card">
@@ -154,19 +178,34 @@ export default function PreviewPanel() {
             Output
           </h2>
         </div>
-        <Button
-          size="sm"
-          onClick={runQuery}
-          disabled={isRunning || blocks.length === 0}
-          className="h-7 gap-1.5 text-[11px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-medium"
-        >
-          {isRunning ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Play className="h-3 w-3" />
-          )}
-          {isRunning ? "Running..." : "Run Query"}
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span>Format:</span>
+            <select
+              className="h-7 rounded-md border border-border bg-card/60 px-2 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={payloadFormat}
+              onChange={(e) =>
+                setPayloadFormat(e.target.value === "sql" ? "sql" : "json")
+              }
+            >
+              <option value="json">JSON</option>
+              <option value="sql">SQL</option>
+            </select>
+          </div>
+          <Button
+            size="sm"
+            onClick={runQuery}
+            disabled={isRunning || blocks.length === 0}
+            className="h-7 gap-1.5 text-[11px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-medium"
+          >
+            {isRunning ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Play className="h-3 w-3" />
+            )}
+            {isRunning ? "Running..." : "Run Query"}
+          </Button>
+        </div>
       </div>
 
       {lastRunStatus === "success" && lastRunTime !== null && (

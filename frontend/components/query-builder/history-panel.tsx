@@ -64,7 +64,7 @@ export default function HistoryPanel() {
   return (
     <Dialog open={showHistory} onOpenChange={setShowHistory}>
       <DialogContent className={cn("max-w-2xl max-h-[80vh] p-0 gap-0 rounded-2xl border-border bg-card overflow-hidden shadow-2xl", locale === "braille" && "font-braille")}>
-        <DialogHeader className="px-5 py-3 border-b border-border bg-card/80 backdrop-blur-sm">
+        <DialogHeader className="px-5 pr-10 py-3 border-b border-border bg-card/80 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-3">
             <DialogTitle className="flex items-center gap-2.5 text-[13px] font-semibold">
               <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">

@@ -27,12 +27,9 @@ _Ещё не в релизе._
 ## [0.6.0]
 
 ### Добавлено
-- CRUD API для Spark-таблиц: users, orders, products (GET/POST/PUT/DELETE).
 - Healthcheck `GET /api/v1/health`: проверка бекенда, фронтенда и Spark-сессии.
 - `make pre` — запуск pre-commit + pytest из корня проекта.
 - Схемы `ComponentHealth`, `HealthResponse` для healthcheck-ответа.
-- Глобальная обработка Spark-ошибок через `_repo_call` в `CrudService` (HTTP 503).
-- Автовосстановление при рассинхроне метастора и файловой системы Spark.
 
 ### Изменено
 - Все HTTP-статус-коды заменены на константы `fastapi.status`.

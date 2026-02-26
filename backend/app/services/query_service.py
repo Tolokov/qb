@@ -39,6 +39,33 @@ class QueryService:
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Query execution failed"
             ) from e
 
+    def execute_sql(self, sql: str) -> dict[str, Any]:
+        try:
+            if not isinstance(sql, str):
+                raise ValueError("Body must be a SQL string")
+            if not sql.strip():
+                raise ValueError("SQL string must not be empty")
+        except ValueError as e:
+            logger.warning("Validation failed for SQL execute: %s", e)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+        except HTTPException:
+            raise
+        except Exception as e:  # noqa: BLE001
+            logger.exception("Unexpected error in query service (SQL): %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
+            ) from e
+
+        try:
+            return self._repository.execute_sql(sql)
+        except HTTPException:
+            raise
+        except Exception as e:  # noqa: BLE001
+            logger.error("Repository execution error (SQL): %s", e, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Query execution failed"
+            ) from e
+
     def _validate_payload_type(self, payload: object) -> None:
         allowed = (dict, list, str, int, float, bool, type(None))
         if not isinstance(payload, allowed):

@@ -29,8 +29,13 @@ function block(
 /** Simple: source, one column, limit (3 blocks) */
 function getSimpleBlocks(): QueryBlock[] {
   return [
-    block("source", "Users", { table: "users" }, { icon: "Database" }),
-    block("column", "Select Column", { column: "*", alias: "" }, { icon: "Columns3" }),
+    block(
+      "source",
+      "http_cyrillic",
+      { table: "prd_advert_ods.http_cyrillic" },
+      { icon: "Database" },
+    ),
+    block("column", "request_id", { column: "request_id", alias: "" }, { icon: "Columns3" }),
     block("limit", "LIMIT", { limit: 10, offset: 0 }, { icon: "Minus" }),
   ];
 }
@@ -38,13 +43,28 @@ function getSimpleBlocks(): QueryBlock[] {
 /** Medium: source, column, one subquery (nested source + column + filter), limit */
 function getMediumBlocks(): QueryBlock[] {
   const subqueryChildren: QueryBlock[] = [
-    block("source", "Products", { table: "products" }, { icon: "Database" }),
-    block("column", "Select Column", { column: "*", alias: "" }, { icon: "Columns3" }),
-    block("filter", "Greater Than", { column: "id", operator: ">", value: 0 }, { icon: "Filter" }),
+    block(
+      "source",
+      "dsp_events (high bids)",
+      { table: "prd_advert_ods.dsp_events" },
+      { icon: "Database" },
+    ),
+    block("column", "event_id", { column: "event_id", alias: "" }, { icon: "Columns3" }),
+    block(
+      "filter",
+      "bid_price > 0.05",
+      { column: "bid_price", operator: ">", value: 0.05 },
+      { icon: "Filter" },
+    ),
   ];
   return [
-    block("source", "Orders", { table: "orders" }, { icon: "Database" }),
-    block("column", "Select Column", { column: "*", alias: "" }, { icon: "Columns3" }),
+    block(
+      "source",
+      "dsp_events",
+      { table: "prd_advert_ods.dsp_events" },
+      { icon: "Database" },
+    ),
+    block("column", "event_id", { column: "event_id", alias: "" }, { icon: "Columns3" }),
     block("subquery", "Subquery", { alias: "sub" }, { icon: "Braces", children: subqueryChildren }),
     block("limit", "LIMIT", { limit: 10, offset: 0 }, { icon: "Minus" }),
   ];
@@ -53,39 +73,96 @@ function getMediumBlocks(): QueryBlock[] {
 /** Complex: users + subqueries, subquery-in-subquery (ord contains items), filters at each level, ORDER BY, LIMIT */
 function getComplexBlocks(): QueryBlock[] {
   const innerSubqueryChildren: QueryBlock[] = [
-    block("source", "Order items", { table: "order_items" }, { icon: "Database" }),
-    block("column", "Order ID", { column: "order_id", alias: "" }, { icon: "Columns3" }),
-    block("filter", "Greater Than", { column: "quantity", operator: ">", value: 0 }, { icon: "Filter" }),
+    block(
+      "source",
+      "SGM_UPLOAD_DSP_SEGMENT (status IN)",
+      { table: "prd_advert_ods.sgm_upload_dsp_segment" },
+      { icon: "Database" },
+    ),
+    block("column", "upload_id", { column: "upload_id", alias: "" }, { icon: "Columns3" }),
+    block(
+      "filter",
+      "status IN (success,failed)",
+      { column: "status", operator: "IN", value: "success,failed" },
+      { icon: "Filter" },
+    ),
   ];
   const subOrdChildren: QueryBlock[] = [
-    block("source", "Orders", { table: "orders" }, { icon: "Database" }),
-    block("subquery", "Subquery", { alias: "items" }, { icon: "Braces", children: innerSubqueryChildren }),
-    // alias ord_id avoids ambiguity with users.id at outer level
-    block("column", "Order ID", { column: "id", alias: "ord_id" }, { icon: "Columns3" }),
-    block("filter", "Completed", { column: "completed", operator: "=", value: true }, { icon: "Filter" }),
+    block(
+      "source",
+      "SGM_UPLOAD_DSP_SEGMENT",
+      { table: "prd_advert_ods.sgm_upload_dsp_segment" },
+      { icon: "Database" },
+    ),
+    block(
+      "subquery",
+      "Subquery",
+      { alias: "recent_uploads" },
+      { icon: "Braces", children: innerSubqueryChildren },
+    ),
+    block("column", "segment_id", { column: "segment_id", alias: "seg_id" }, { icon: "Columns3" }),
+    block(
+      "filter",
+      "msisdn <> ''",
+      { column: "msisdn", operator: "<>", value: "" },
+      { icon: "Filter" },
+    ),
   ];
   const subProdChildren: QueryBlock[] = [
-    block("source", "Products", { table: "products" }, { icon: "Database" }),
-    // alias prod_name avoids ambiguity with users.name at outer level
-    block("column", "Product Name", { column: "name", alias: "prod_name" }, { icon: "Columns3" }),
+    block(
+      "source",
+      "V_CATALOG_2GIS_PHONES",
+      { table: "prd_advert_dict.v_catalog_2gis_phones" },
+      { icon: "Database" },
+    ),
+    block("column", "phone_id", { column: "phone_id", alias: "phone_id" }, { icon: "Columns3" }),
   ];
   const subCatChildren: QueryBlock[] = [
-    block("source", "Categories", { table: "categories" }, { icon: "Database" }),
-    // explicit aliases instead of * to avoid id/name conflicts at outer level
-    block("column", "Cat ID", { column: "id", alias: "cat_id" }, { icon: "Columns3" }),
-    block("column", "Cat Name", { column: "name", alias: "cat_name" }, { icon: "Columns3" }),
+    block(
+      "source",
+      "DSP_EVENTS",
+      { table: "prd_advert_ods.dsp_events" },
+      { icon: "Database" },
+    ),
+    block("column", "event_id", { column: "event_id", alias: "event_id" }, { icon: "Columns3" }),
+    block("column", "user_id", { column: "user_id", alias: "user_id" }, { icon: "Columns3" }),
   ];
   return [
-    block("source", "Users", { table: "users" }, { icon: "Database" }),
-    block("subquery", "Subquery", { alias: "ord" }, { icon: "Braces", children: subOrdChildren }),
-    block("subquery", "Subquery", { alias: "prod" }, { icon: "Braces", children: subProdChildren }),
-    block("subquery", "Subquery", { alias: "cat" }, { icon: "Braces", children: subCatChildren }),
-    block("column", "User ID", { column: "id", alias: "" }, { icon: "Columns3" }),
-    block("column", "User Name", { column: "name", alias: "" }, { icon: "Columns3" }),
-    block("filter", "Greater Than", { column: "id", operator: ">=", value: 10 }, { icon: "Filter" }),
-    block("filter", "Like", { column: "name", operator: "LIKE", value: "%" }, { icon: "Filter" }),
-    block("ordering", "Order DESC", { column: "id", direction: "DESC" }, { icon: "ArrowDownNarrowWide" }),
-    block("ordering", "Order ASC", { column: "name", direction: "ASC" }, { icon: "ArrowUpNarrowWide" }),
+    block(
+      "source",
+      "IMSI_X_MSISDN_ACTUAL",
+      { table: "prd_advert_ods.imsi_x_msisdn_actual" },
+      { icon: "Database" },
+    ),
+    block("subquery", "Subquery", { alias: "uploads" }, { icon: "Braces", children: subOrdChildren }),
+    block("subquery", "Subquery", { alias: "phones" }, { icon: "Braces", children: subProdChildren }),
+    block("subquery", "Subquery", { alias: "events" }, { icon: "Braces", children: subCatChildren }),
+    block("column", "imsi", { column: "imsi", alias: "" }, { icon: "Columns3" }),
+    block("column", "msisdn", { column: "msisdn", alias: "" }, { icon: "Columns3" }),
+    block(
+      "filter",
+      "operator = МТС",
+      { column: "operator", operator: "=", value: "МТС" },
+      { icon: "Filter" },
+    ),
+    block(
+      "filter",
+      "is_active = true",
+      { column: "is_active", operator: "=", value: true },
+      { icon: "Filter" },
+    ),
+    block(
+      "ordering",
+      "updated_at DESC",
+      { column: "updated_at", direction: "DESC" },
+      { icon: "ArrowDownNarrowWide" },
+    ),
+    block(
+      "ordering",
+      "imsi ASC",
+      { column: "imsi", direction: "ASC" },
+      { icon: "ArrowUpNarrowWide" },
+    ),
     block("limit", "LIMIT", { limit: 10, offset: 0 }, { icon: "Minus" }),
   ];
 }

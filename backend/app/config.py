@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_TITLE: str = "Query Builder Service"
     APP_DESC: str = (
-        "Принимает декларативное JSON-описание запроса и компилирует его в Hadoop-совместимый SQL."
+        "Принимает декларативное JSON-описание запроса и компилирует его в SPARK."
     )
     APP_VERSION: str = Field(default="0.8.0", alias="version")
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"

@@ -165,6 +165,38 @@ export async function compileRawJsonOnBackend(
   return res.json() as Promise<CompileResponse>;
 }
 
+export async function compileSqlOnBackend(sql: string): Promise<CompileResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/query/compile-sql`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sql),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let message = `HTTP ${res.status}`;
+    try {
+      const j = JSON.parse(text) as { detail?: unknown };
+      if (j.detail !== undefined) {
+        const detail = j.detail;
+        message = Array.isArray(detail)
+          ? (detail as Array<{ loc?: unknown[]; msg?: string; type?: string }>)
+              .map((d) => {
+                const loc = d.loc?.length ? d.loc.join(".") + ": " : "";
+                return loc + (d.msg ?? String(d));
+              })
+              .join("; ")
+          : String(detail);
+      } else if (text) {
+        message = text;
+      }
+    } catch {
+      if (text) message = text;
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<CompileResponse>;
+}
+
 export async function compileQueryOnBackend(
   payload: BackendQueryPayload
 ): Promise<CompileResponse> {
