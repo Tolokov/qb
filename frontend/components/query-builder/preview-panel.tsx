@@ -51,10 +51,15 @@ export default function PreviewPanel() {
   const [copyError, setCopyError] = useState<string | null>(null);
   const [payloadFormat, setPayloadFormat] = useState<"json" | "sql">("json");
 
-  const jsonOutput = useMemo(() => {
-    if (blocks.length === 0) return "";
-    return JSON.stringify(blocksToJson(blocks), null, 2);
+  const jsonPayload = useMemo(() => {
+    if (blocks.length === 0) return null;
+    return blocksToJson(blocks);
   }, [blocks]);
+
+  const jsonOutput = useMemo(() => {
+    if (!jsonPayload) return "";
+    return JSON.stringify(jsonPayload, null, 2);
+  }, [jsonPayload]);
 
   const sqlOutput = useMemo(() => {
     if (blocks.length === 0) return "";
@@ -106,7 +111,7 @@ export default function PreviewPanel() {
     const start = Date.now();
 
     try {
-      const json = blocksToJson(blocks) as unknown;
+      const json = (jsonPayload ?? blocksToJson(blocks)) as unknown;
       if (process.env.NODE_ENV === "development") {
         console.log(
           "[QB] payload sent to backend:",

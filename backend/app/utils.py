@@ -36,7 +36,7 @@ def _check_spark() -> ComponentHealth:
         spark = get_spark_session()
         spark.sql("SELECT 1").collect()
         return ComponentHealth(status="ok")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("Spark health check failed: %s", exc)
         return ComponentHealth(status="down", detail=str(exc))
 
@@ -48,7 +48,9 @@ from pathlib import Path
 
 def include_openapi(app):
     """Вынесение openapi в локаль"""
-    openapi_cache_path = Path(__file__).resolve().parents[2] / "openapi.json"
+    # Cache OpenAPI spec under the backend directory so the backend
+    # container owns and serves its own schema file.
+    openapi_cache_path = Path(__file__).resolve().parents[1] / "openapi.json"
 
     @app.get(
         "/.well-known/appspecific/com.chrome.devtools.json",

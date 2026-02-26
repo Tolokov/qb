@@ -20,13 +20,27 @@ class IbisRepository:
 
     def execute(self, payload: object) -> dict[str, Any]:
         if not isinstance(payload, dict):
-            return {"echo": payload, "sql": None}
+            return {
+                "sql": None,
+                "columns": None,
+                "rows": None,
+                "row_count": 0,
+                "truncated": False,
+                "execution_time_ms": 0,
+            }
 
         from_val = payload.get("from", [])
         if isinstance(from_val, str):
             from_val = [from_val]
         if not from_val or not isinstance(from_val, list):
-            return {"echo": payload, "sql": None}
+            return {
+                "sql": None,
+                "columns": None,
+                "rows": None,
+                "row_count": 0,
+                "truncated": False,
+                "execution_time_ms": 0,
+            }
 
         subqueries = payload.get("subqueries", [])
         if subqueries and isinstance(subqueries, list):
@@ -55,7 +69,6 @@ class IbisRepository:
             "row_count": len(rows),
             "truncated": truncated,
             "execution_time_ms": elapsed_ms,
-            "echo": None,
         }
 
     def execute_sql(self, sql: str) -> dict[str, Any]:
@@ -81,7 +94,6 @@ class IbisRepository:
             "row_count": len(rows),
             "truncated": truncated,
             "execution_time_ms": elapsed_ms,
-            "echo": None,
         }
 
     def _execute_with_sql(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -108,7 +120,6 @@ class IbisRepository:
             "row_count": len(rows),
             "truncated": truncated,
             "execution_time_ms": elapsed_ms,
-            "echo": None,
         }
 
     def _payload_to_sql(self, payload: dict[str, Any]) -> str:
@@ -648,3 +659,4 @@ class IbisRepository:
         except Exception:  # noqa: BLE001
             pass
         return str(v)
+

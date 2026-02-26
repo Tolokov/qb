@@ -1,32 +1,14 @@
 from app.services.base import IQueryRepository
 
 
-class _StubQueryBuilder:
-    """Minimal stub for build(payload) -> query. QueryBuilder not yet implemented."""
+class QueryRepository(IQueryRepository):
+    """Placeholder for future real repository based on QueryBuilder/SparkCodeRenderer.
 
-    def build(self, payload: dict):
-        return payload
+    Реализация будет добавлена, когда появится полноценная компиляция JSON → SQL/код Spark.
+    Сейчас этот класс существует как заглушка без внутренней логики, чтобы не хранить моки
+    в боевом коде.
+    """
 
-
-class _StubSparkCodeRenderer:
-    """Minimal stub for render(query) -> str. SparkCodeRenderer not yet implemented."""
-
-    def render(self, query) -> str:
-        return str(query) if query else ""
-
-
-class MockQueryRepository(IQueryRepository):
-    def __init__(
-        self,
-        query_builder: _StubQueryBuilder | None = None,
-        renderer: _StubSparkCodeRenderer | None = None,
-    ):
-        self._builder = query_builder or _StubQueryBuilder()
-        self._renderer = renderer or _StubSparkCodeRenderer()
-
-    def execute(self, payload: dict) -> dict:
-        if not isinstance(payload, dict):
-            return {"sql": "", "spark": ""}
-        query = self._builder.build(payload)
-        code = self._renderer.render(query)
-        return {"sql": code, "spark": code}
+    def execute(self, query: object) -> dict:
+        # Заглушка: реализация будет добавлена позже.
+        raise NotImplementedError("QueryRepository is not implemented yet.")

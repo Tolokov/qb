@@ -3,10 +3,11 @@ import json
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Request
-from app.utils import get_query_logger, extract_payload
+
 from app.api.v1.schemas.query import QueryResponse
-from app.dependencies import get_query_service
+from app.dependencies import get_json_query_service
 from app.services.query_service import QueryService
+from app.utils import extract_payload, get_query_logger
 
 router = APIRouter()
 
@@ -20,10 +21,11 @@ _COMPILE_BODY_EXAMPLE = {
 @router.post(
     "/query/compile",
     response_model=QueryResponse,
-    summary="Эхо JSON",
+    summary="Компиляция JSON-запроса в SQL и выполнение",
     description=(
-        "Принимает любой валидный JSON; при body={'payload': ...} "
-        "используется payload (обратная совместимость)."
+        "Принимает описание запроса в формате JSON_SQL. При body={'payload': ...} "
+        "используется payload (обратная совместимость). Возвращает скомпилированный SQL "
+        "и (опционально) табличный результат выполнения."
     ),
 )
 async def compile_query_route(
@@ -54,7 +56,7 @@ async def compile_query_route(
             "example": _COMPILE_BODY_EXAMPLE,
         },
     ),
-    service: QueryService = Depends(get_query_service),
+    service: QueryService = Depends(get_json_query_service),
 ) -> QueryResponse:
     if body is None and not await request.body():
         body = {}

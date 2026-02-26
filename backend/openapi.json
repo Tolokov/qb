@@ -207,16 +207,6 @@
       },
       "QueryResponse": {
         "properties": {
-          "echo": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Echo",
-            "description": "Эхо переданного body (или payload при формате {payload: ...})."
-          },
           "sql": {
             "anyOf": [
               {
@@ -337,3 +327,4 @@
     }
   }
 }
+

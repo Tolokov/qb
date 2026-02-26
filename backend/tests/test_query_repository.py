@@ -1,10 +1,31 @@
-"""Tests for MockQueryRepository (import fix, basic execute)."""
+"""Tests for test-only MockQueryRepository (local to tests)."""
 
-from app.repositories.query_repository import MockQueryRepository
+from app.services.base import IQueryRepository
+
+
+class _StubQueryBuilder:
+    """Minimal stub for build(payload) -> query. QueryBuilder not yet implemented."""
+
+    def build(self, payload: dict):
+        return payload
+
+
+class MockQueryRepository(IQueryRepository):
+    """Test-only mock repository, lives in tests only."""
+
+    def __init__(self, query_builder: _StubQueryBuilder | None = None):
+        self._builder = query_builder or _StubQueryBuilder()
+
+    def execute(self, payload: dict) -> dict:
+        if not isinstance(payload, dict):
+            return {"sql": "", "spark": ""}
+        query = self._builder.build(payload)
+        code = str(query) if query else ""
+        return {"sql": code, "spark": code}
 
 
 def test_mock_query_repository_execute():
-    """MockQueryRepository executes without NameError (QueryBuilder/SparkCodeRenderer stubbed)."""
+    """MockQueryRepository executes without NameError (QueryBuilder stubbed)."""
     repo = MockQueryRepository()
     result = repo.execute({"from": "users", "select": ["*"]})
     assert isinstance(result, dict)

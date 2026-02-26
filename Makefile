@@ -26,7 +26,7 @@ setup-frontend:
 	cd frontend && pnpm install
 
 setup-backend:
-	cd backend && python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+	cd backend && python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 
 # Проверка venv бекенда; при отсутствии — запуск setup-backend
 ensure-backend:
